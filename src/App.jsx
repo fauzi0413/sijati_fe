@@ -4,6 +4,11 @@ import LandingPage from './components/LandingPage'; // pastikan file ini ada
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import UploadDokumen from './pages/UploadDokumen';
+import FAQManagement from './pages/FAQManagement';
+import StatistikChatbot from './pages/StatistikChatbot';
+import DokumenDetail from './pages/DokumenDetail';
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
@@ -13,6 +18,15 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
+
+        {/* Halaman Dashboard/Admin */}
+        <Route path="/upload" element={<UploadDokumen />} />
+        <Route path="/faq" element={<FAQManagement />} />
+        <Route path="/statistik" element={<StatistikChatbot />} />
+        <Route path="/dokumen/:id" element={<DokumenDetail />} />
+
+        {/* Fallback untuk semua route yang tidak ditemukan */}
+        <Route path="*" element={<NotFound />} />
 
         {/* Optional: redirect halaman tidak ditemukan ke landing */}
         <Route path="*" element={<Navigate to="/" />} />

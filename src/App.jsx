@@ -9,6 +9,7 @@ import FAQManagement from './pages/FAQManagement';
 import StatistikChatbot from './pages/StatistikChatbot';
 import DokumenDetail from './pages/DokumenDetail';
 import NotFound from './pages/NotFound';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
+         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Halaman Dashboard/Admin */}
         <Route path="/upload" element={<UploadDokumen />} />

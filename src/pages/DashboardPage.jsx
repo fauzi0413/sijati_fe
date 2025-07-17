@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { LuMessageCircleMore } from "react-icons/lu";
 import ReactMarkdown from 'react-markdown';
 import Layout from "../components/Layout";
 
@@ -26,7 +27,7 @@ export default function DokumenDetail() {
     const userMessage = { from: 'user', text: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
-    setIsLoading(true); // MULAI loading
+    setIsLoading(true);
 
     const apiKey = process.env.REACT_APP_OPENROUTER_API_KEY;
     if (!apiKey) {
@@ -69,7 +70,7 @@ export default function DokumenDetail() {
         { from: 'bot', text: 'Terjadi kesalahan saat menghubungi server.' }
       ]);
     } finally {
-      setIsLoading(false); // SELESAI loading
+      setIsLoading(false);
     }
   };
 
@@ -77,18 +78,11 @@ export default function DokumenDetail() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const profileImage = user?.photoURL?.startsWith('http') ? user.photoURL : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || 'User')}&background=random&rounded=true`;
-
   return (
     <Layout>
       <div className="flex flex-col flex-1 h-full overflow-hidden">
-        {/* Main Scrollable Area */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-6">
-          <div
-            className={`flex flex-col items-center ${
-              userHasStarted ? 'pt-4 pb-32' : 'justify-center h-full'
-            }`}
-          >
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 pb-32">
+          <div className={`flex flex-col items-center ${userHasStarted ? '' : 'justify-center h-full'}`}>
             {!userHasStarted && (
               <>
                 <h1 className="text-pink-500 text-2xl font-semibold mb-6 text-center">
@@ -96,7 +90,7 @@ export default function DokumenDetail() {
                 </h1>
                 <div className="w-full max-w-3xl">
                   <div className="flex items-center rounded-full bg-white px-6 py-3 shadow-md">
-                    <span className="text-gray-400 mr-3 text-xl">＋</span>
+                    <span className="text-gray-400 mr-3 text-xl"><LuMessageCircleMore /></span>
                     <input
                       type="text"
                       value={input}
@@ -105,12 +99,7 @@ export default function DokumenDetail() {
                       className="flex-1 focus:outline-none text-sm"
                       onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                     />
-                    <button
-                      onClick={handleSend}
-                      className="text-gray-400 ml-3 text-lg"
-                    >
-                      ➤
-                    </button>
+                    <button onClick={handleSend} className="text-gray-400 ml-3 text-lg">➤</button>
                   </div>
                 </div>
               </>
@@ -138,12 +127,11 @@ export default function DokumenDetail() {
           </div>
         </main>
 
-        {/* Input Box */}
         {userHasStarted && (
-          <div className="fixed bottom-4 sm:bottom-6 left-[250px] right-4 sm:right-6 z-40">
+          <div className="fixed bottom-4 left-4 right-4 sm:left-64 sm:right-6 z-40">
             <div className="max-w-3xl mx-auto">
               <div className="flex items-center rounded-full bg-white px-6 py-3 shadow-md">
-                <span className="text-gray-400 mr-3 text-xl">＋</span>
+                <span className="text-gray-400 mr-3 text-xl"><LuMessageCircleMore /></span>
                 <input
                   type="text"
                   value={input}
@@ -152,12 +140,7 @@ export default function DokumenDetail() {
                   className="flex-1 focus:outline-none text-sm"
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 />
-                <button
-                  onClick={handleSend}
-                  className="text-gray-400 ml-3 text-lg"
-                >
-                  ➤
-                </button>
+                <button onClick={handleSend} className="text-gray-400 ml-3 text-lg">➤</button>
               </div>
             </div>
           </div>
@@ -165,4 +148,4 @@ export default function DokumenDetail() {
       </div>
     </Layout>
   );
-};
+}

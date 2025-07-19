@@ -6,6 +6,7 @@ import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, provider } from '../firebase';
 import bgImage from '../assets/bg-biru.png';
 import Swal from 'sweetalert2';
+import { IoMdArrowRoundBack } from 'react-icons/io';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -68,7 +69,16 @@ const LoginPage = () => {
       style={{ backgroundImage: `url(${bgImage})` }}
     >
       <div className="bg-white shadow-md rounded-2xl px-6 pt-6 pb-8 w-full max-w-md sm:max-w-sm min-h-[580px]">
-        {/* Tabs Smooth */}
+        {/* Tombol Back */}
+        <div className="mb-4">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center space-x-2 text-gray-700 hover:bg-gray-100 px-3 py-2 rounded transition"
+          >
+            <IoMdArrowRoundBack className="text-xl" />
+            <span className="text-sm">Back</span>
+          </button>
+        </div>
         <div className="relative mb-6 bg-gray-200 rounded-full h-10">
           <div className="absolute top-0 left-[45%] h-full w-[55%] bg-black rounded-full z-10 transition-all duration-300" />
           <div className="relative z-20 flex h-full text-sm font-semibold">
@@ -76,13 +86,13 @@ const LoginPage = () => {
               onClick={() => navigate('/register')}
               className="flex-1 rounded-full text-gray-600"
             >
-              Sign up
+              Register
             </button>
             <button
               className="flex-1 rounded-full text-white"
               disabled
             >
-              Log in
+              Login
             </button>
           </div>
         </div>

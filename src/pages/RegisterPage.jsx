@@ -6,6 +6,7 @@ import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, provider } from '../firebase';
 import bgImage from '../assets/bg-biru.png';
 import Swal from 'sweetalert2';
+import { IoMdArrowRoundBack } from 'react-icons/io';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -84,12 +85,21 @@ const RegisterPage = () => {
       style={{ backgroundImage: `url(${bgImage})` }}
     >
       <div className="bg-white shadow-md rounded-2xl px-6 pt-6 pb-8 w-full max-w-md sm:max-w-sm min-h-[580px]">
-        {/* Tabs Smooth */}
+        {/* Tombol Back */}
+        <div className="mb-4">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center space-x-2 text-gray-700 hover:bg-gray-100 px-3 py-2 rounded transition"
+          >
+            <IoMdArrowRoundBack className="text-xl" />
+            <span className="text-sm">Back</span>
+          </button>
+        </div>
         <div className="relative mb-6 bg-gray-200 rounded-full h-10">
           <div className="absolute top-0 left-0 h-full w-[55%] bg-black rounded-full z-10 transition-all duration-300" />
           <div className="relative z-20 flex h-full text-sm font-semibold">
-            <button className="flex-1 rounded-full text-white" disabled>Sign up</button>
-            <button onClick={() => navigate('/login')} className="flex-1 rounded-full text-gray-600">Log in</button>
+            <button className="flex-1 rounded-full text-white" disabled>Register</button>
+            <button onClick={() => navigate('/login')} className="flex-1 rounded-full text-gray-600">Login</button>
           </div>
         </div>
 
@@ -122,7 +132,7 @@ const RegisterPage = () => {
 
         <button onClick={handleManualSignUp}
           className="bg-blue-500 text-white w-full py-2 rounded-full font-medium mt-6 hover:bg-blue-600">
-          Sign up
+          Register
         </button>
 
         <div className="flex items-center my-6">
@@ -134,7 +144,7 @@ const RegisterPage = () => {
         <button onClick={handleGoogleSignUp}
           className="flex items-center justify-center gap-2 border rounded-full px-4 py-2 w-full hover:bg-gray-100">
           <FcGoogle className="text-xl" />
-          <span className="text-sm">Sign up with Google</span>
+          <span className="text-sm">Register with Google</span>
         </button>
       </div>
     </div>

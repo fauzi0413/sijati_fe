@@ -10,6 +10,8 @@ import StatistikChatbot from './pages/StatistikChatbot';
 import DokumenDetail from './pages/DokumenDetail';
 import NotFound from './pages/NotFound';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import ManagementUser from './components/ManagementUser';
+import LoginLogs from './pages/LoginLogs';
 
 function App() {
   return (
@@ -26,6 +28,8 @@ function App() {
         <Route path="/faq" element={<FAQManagement />} />
         <Route path="/statistik" element={<StatistikChatbot />} />
         <Route path="/dokumen/:id" element={<DokumenDetail />} />
+        <Route path="/user-management" element={<ManagementUser />} /> 
+        <Route path="/login-logs" element={<LoginLogs />} />
 
         {/* Fallback untuk semua route yang tidak ditemukan */}
         <Route path="*" element={<NotFound />} />

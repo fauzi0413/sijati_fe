@@ -118,3 +118,97 @@ export const deleteDocumentById = (id, callback) => {
     console.log(err)
   })
 }
+
+// FETCH API USER
+export const getUser = (callback) => {
+  axios
+  .get(`${baseURLBackEnd}/users`)
+  .then((res) => {
+    callback(res.data)
+  }).catch((err) => {
+    console.log(err)
+  })
+}
+
+export const getUserByID = (id, callback) => {
+  axios
+  .get(`${baseURLBackEnd}/users/${id}`)  
+  .then((res) => {
+    callback(res.data)
+  }).catch((err) => {
+    console.log(err)
+  })
+}
+
+export const postUser = async (payload, callback) => {
+  try {
+      const response = await axios.post(`${baseURLBackEnd}/users`, payload, {
+          headers: {
+              'Content-Type': 'application/json'
+          }
+      });
+      console.log("Post Success:", response.data); // debug
+      callback(response.data); // Jika sukses, panggil callback
+  } catch (error) {
+      console.error('Gagal mengirim data:', error);
+  }
+};
+
+export const putUser = async (id, payload, callback) => {
+  try {
+      const response = await axios.put(`${baseURLBackEnd}/users/${id}`, payload, {
+          headers: {
+              'Content-Type': 'application/json'
+          }
+      });
+      // console.log("Update Success:", response.data); // debug
+      callback(response.data); // Jika sukses, panggil callback
+  } catch (error) {
+      console.error('Gagal mengirim data:', error);
+  }
+};
+
+export const deleteUserById = (id, callback) => {
+  axios
+  .delete(`${baseURLBackEnd}/users/${id}`)  
+  .then((res) => {
+    callback(res.data)
+  }).catch((err) => {
+    console.log(err)
+  })
+}
+
+// FETCH API USER
+export const getLoginlogs = (callback) => {
+  axios
+  .get(`${baseURLBackEnd}/login-logs`)
+  .then((res) => {
+    callback(res.data)
+  }).catch((err) => {
+    console.log(err)
+  })
+}
+
+export const getLoginlogsByID = (id, callback) => {
+  axios
+  .get(`${baseURLBackEnd}/login-logs/${id}`)  
+  .then((res) => {
+    callback(res.data)
+  }).catch((err) => {
+    console.log(err)
+  })
+}
+
+export const postLoginlogs = async (payload, callback) => {
+  try {
+      const response = await axios.post(`${baseURLBackEnd}/login-logs`, payload, {
+          headers: {
+              'Content-Type': 'application/json'
+          }
+      });
+      // console.log("Post Success:", response.data); // debug
+      callback(response.data); // Jika sukses, panggil callback
+  } catch (error) {
+      console.error('Gagal mengirim data:', error);
+  }
+};

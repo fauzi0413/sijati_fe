@@ -7,6 +7,7 @@ import { auth, provider } from '../firebase';
 import bgImage from '../assets/bg-biru.png';
 import Swal from 'sweetalert2';
 import { IoMdArrowRoundBack } from 'react-icons/io';
+import { getUser, postLoginlogs, putUser } from '../api/axios';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -31,20 +32,84 @@ const LoginPage = () => {
         icon: 'warning',
         title: 'Form tidak lengkap',
         text: 'Email dan password harus diisi!',
+        customClass: {
+          confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
+        }
       });
     }
 
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate('/dashboard');
-    } catch (err) {
-      console.error(err);
-      Swal.fire({
-        icon: 'error',
-        title: 'Login gagal',
-        text: 'Email atau password salah. Coba lagi.',
-      });
-    }
+    // 1. Ambil user dari database lokal
+    getUser(async (users) => {
+      const foundUser = users.find(u => u.email === email);
+
+      if (!foundUser) {
+        return Swal.fire({
+          icon: 'error',
+          title: 'Login gagal',
+          text: 'User tidak ditemukan di database lokal.',
+          customClass: {
+            confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
+          }
+        });
+      }
+
+      try {
+        // Login dengan verifikasi email dan password di firebase
+        await signInWithEmailAndPassword(auth, email, password);
+        
+        // Update last login di database lokal
+        const now = new Date().toISOString();
+
+        // console.log('🔄 Updating last_login:', {
+        //   user_id: foundUser.user_id,
+        //   last_login: now
+        // });
+
+        putUser(foundUser.user_id, { last_login: now }, (res) => {
+          // console.log('✅ last_login updated:', res);
+        });
+
+        // Simpan log login pada database local
+        const ipAddress = await fetch("https://api.ipify.org?format=json")
+          .then(res => res.json())
+          .then(data => data.ip)
+          .catch(() => 'unknown');
+
+        const userAgent = navigator.userAgent;
+
+        postLoginlogs({
+          user_id: foundUser.user_id,
+          ip_address: ipAddress,
+          user_agent: userAgent,
+          status: 'success',
+          failure_reason: '' // kosong jika sukses
+        }, (res) => {
+          // console.log('Login log saved:', res);
+        });
+
+        localStorage.setItem('user', JSON.stringify(foundUser));
+        Swal.fire({
+          icon: 'success',
+          title: 'Login berhasil',
+          text: `Selamat datang ${foundUser.username}!`,
+          customClass: {
+            confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
+          }
+        }).then(() => {
+          navigate('/dashboard');
+        });
+      } catch (err) {
+        console.error('❌ Firebase Error:', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Login gagal',
+          text: 'Email atau password salah. Coba lagi.',
+          customClass: {
+            confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
+          }
+        });
+      }
+    });
   };
 
   const handleGoogleLogin = async () => {
@@ -59,6 +124,9 @@ const LoginPage = () => {
         icon: 'error',
         title: 'Login Google gagal',
         text: 'Terjadi kesalahan saat login.',
+        customClass: {
+          confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
+        }
       });
     }
   };

@@ -15,7 +15,7 @@ export default function Layout({ children }) {
     return user?.photoURL?.startsWith("http")
       ? user.photoURL
       : `https://ui-avatars.com/api/?name=${encodeURIComponent(
-          user?.displayName || "User"
+          user?.displayName || user?.username
         )}&background=random&rounded=true`;
   };
 
@@ -59,7 +59,7 @@ export default function Layout({ children }) {
                 {/* Profile & Welcome */}
                 <div className="flex items-center space-x-2">
                   <span className="hidden sm:block text-sm text-gray-700">
-                    Welcome, {user?.displayName?.toUpperCase() || "User"}
+                    Welcome, {user?.displayName?.toUpperCase() || user?.username?.toUpperCase()}
                   </span>
                   <img
                     src={getProfileImage()}

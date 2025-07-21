@@ -7,6 +7,7 @@ import { auth, provider } from '../firebase';
 import bgImage from '../assets/bg-biru.png';
 import Swal from 'sweetalert2';
 import { IoMdArrowRoundBack } from 'react-icons/io';
+import { postUser } from '../api/axios';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -34,6 +35,9 @@ const RegisterPage = () => {
         icon: 'warning',
         title: 'Form tidak lengkap',
         text: 'Semua kolom harus diisi!',
+        customClass: {
+          confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
+        },
       });
     }
 
@@ -42,24 +46,62 @@ const RegisterPage = () => {
         icon: 'error',
         title: 'Password tidak cocok',
         text: 'Konfirmasi password harus sama.',
+        customClass: {
+          confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
+        },
       });
     }
 
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      await Swal.fire({
-        icon: 'success',
-        title: 'Berhasil daftar!',
-        text: 'Silakan login sekarang.',
+     try {
+      // 1. Registrasi ke Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
+
+      // 2. Simpan ke database lokal
+      const userData = {
+        user_id: firebaseUser.uid, // atau UUID manual
+        username,
+        email,
+        password,
+        role: 'user', // default role
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+
+      postUser(userData, (responseData) => {
+        // 4. Jika sukses, tampilkan alert dan arahkan ke login
+        Swal.fire({
+          icon: 'success',
+          title: 'Registrasi berhasil',
+          text: 'Silakan login untuk masuk ke sistem.',
+          customClass: {
+            confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
+          }
+        }).then(() => {
+          navigate('/login');
+        });
       });
-      navigate('/login');
-    } catch (err) {
-      console.error(err);
-      Swal.fire({
-        icon: 'error',
-        title: 'Gagal mendaftar',
-        text: 'Terjadi kesalahan. Coba lagi nanti.',
-      });
+    } catch (error) {
+      console.error('❌ Register error:', error);
+      if (error.code === 'auth/email-already-in-use') {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Email sudah terdaftar, silahkan login',
+          text: 'Konfirmasi password harus sama.',
+          customClass: {
+            confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
+          },
+        })
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal registrasi',
+          text: 'Konfirmasi password harus sama.',
+          customClass: {
+            confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
+          },
+        })
+      }
     }
   };
 
@@ -103,7 +145,7 @@ const RegisterPage = () => {
           </div>
         </div>
 
-        <h2 className="text-center font-semibold text-base sm:text-lg mb-6">Sign up</h2>
+        <h2 className="text-center font-semibold text-base sm:text-lg mb-6">Register</h2>
 
         <div className="space-y-4">
           <input name="username" type="text" placeholder="Username" value={formData.username} onChange={handleChange}

@@ -19,7 +19,6 @@ export default function FAQPage() {
 
   useEffect(() => {
     getFAQ((data) => {
-      console.log("DATA FAQ:", data);
       setFaq(data);
     });
   }, []);

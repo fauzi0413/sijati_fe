@@ -10,7 +10,7 @@ import StatistikChatbot from './pages/StatistikChatbot';
 import DokumenDetail from './pages/DokumenDetail';
 import NotFound from './pages/NotFound';
 import ResetPasswordPage from './pages/ResetPasswordPage';
-import ManagementUser from './components/ManagementUser';
+import ManagementUser from './pages/ManagementUser';
 import LoginLogs from './pages/LoginLogs';
 
 function App() {

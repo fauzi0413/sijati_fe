@@ -7,7 +7,10 @@ import { auth, provider } from '../firebase';
 import bgImage from '../assets/bg-biru.png';
 import Swal from 'sweetalert2';
 import { IoMdArrowRoundBack } from 'react-icons/io';
-import { getUser, postLoginlogs, putUser } from '../api/axios';
+import { getUser, postLoginlogs, postUser, putUser } from '../api/axios';
+import bcrypt from 'bcryptjs';
+
+const hashed = await bcrypt.hash('google-oauth-user', 10);
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -38,20 +41,37 @@ const LoginPage = () => {
       });
     }
 
-    // 1. Ambil user dari database lokal
     getUser(async (users) => {
       const foundUser = users.find(u => u.email === email);
 
       if (!foundUser) {
-        return Swal.fire({
-          icon: 'error',
-          title: 'Login gagal',
-          text: 'User tidak ditemukan di database lokal.',
-          customClass: {
-            confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
-          }
-        });
-      }
+      // Simpan log login pada database lokal
+      const ipAddress = await fetch("https://api.ipify.org?format=json")
+        .then(res => res.json())
+        .then(data => data.ip)
+        .catch(() => 'unknown');
+
+      const userAgent = navigator.userAgent;
+
+      postLoginlogs({
+        user_id: '-', // karena user tidak ditemukan
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        status: 'failed',
+        failure_reason: 'User tidak ditemukan'
+      }, (res) => {
+        // console.log('Login log saved:', res);
+      });
+
+      return Swal.fire({
+        icon: 'error',
+        title: 'Login gagal',
+        text: 'User tidak ditemukan',
+        customClass: {
+          confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
+        }
+      });
+    }
 
       try {
         // Login dengan verifikasi email dan password di firebase
@@ -59,11 +79,6 @@ const LoginPage = () => {
         
         // Update last login di database lokal
         const now = new Date().toISOString();
-
-        // console.log('🔄 Updating last_login:', {
-        //   user_id: foundUser.user_id,
-        //   last_login: now
-        // });
 
         putUser(foundUser.user_id, { last_login: now }, (res) => {
           // console.log('✅ last_login updated:', res);
@@ -99,7 +114,24 @@ const LoginPage = () => {
           navigate('/dashboard');
         });
       } catch (err) {
-        console.error('❌ Firebase Error:', err);
+        // Simpan log login pada database lokal
+        const ipAddress = await fetch("https://api.ipify.org?format=json")
+          .then(res => res.json())
+          .then(data => data.ip)
+          .catch(() => 'unknown');
+
+        const userAgent = navigator.userAgent;
+
+        postLoginlogs({
+          user_id: foundUser.user_id,
+          ip_address: ipAddress,
+          user_agent: userAgent,
+          status: 'failed',
+          failure_reason: 'Email atau password salah'
+        }, (res) => {
+          // console.log('Login log saved:', res);
+        });
+
         Swal.fire({
           icon: 'error',
           title: 'Login gagal',
@@ -108,6 +140,7 @@ const LoginPage = () => {
             confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
           }
         });
+
       }
     });
   };
@@ -116,10 +149,88 @@ const LoginPage = () => {
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      localStorage.setItem('user', JSON.stringify(user));
-      navigate('/dashboard');
+
+      const now = new Date().toISOString();
+      const ipAddress = await fetch("https://api.ipify.org?format=json")
+        .then(res => res.json())
+        .then(data => data.ip)
+        .catch(() => 'unknown');
+
+      const userAgent = navigator.userAgent;
+
+      // 1. Cek apakah user sudah ada di database lokal
+      getUser(async (users) => {
+        const foundUser = users.find((u) => u.email === user.email);
+
+        // 2. Jika belum ada → register ke database lokal
+        if (!foundUser) {
+          const newUser = {
+            user_id: user.uid,
+            username: user.displayName || user.email.split('@')[0],
+            email: user.email,
+            password: hashed,
+            role: 'user',
+            created_at: now,
+            updated_at: now,
+            last_login: now
+          };
+
+          await postUser(newUser, (res) => {
+            // console.log('✅ User registered:', res);
+          });
+        } else {
+          // 3. Jika sudah ada → update last_login
+          putUser(foundUser.user_id, { last_login: now }, (res) => {
+            // console.log('✅ last_login updated:', res);
+          });
+        }
+        // 4. Catat login ke loginlog
+        postLoginlogs({
+          user_id: user.uid,
+          ip_address: ipAddress,
+          user_agent: userAgent,
+          status: 'success',
+          failure_reason: ''
+        }, (res) => {
+          // console.log('✅ Login log saved:', res);
+        });
+
+        // 5. Simpan session user
+        localStorage.setItem('user', JSON.stringify(user));
+
+        // 6. Alert sukses
+        Swal.fire({
+          icon: 'success',
+          title: 'Login berhasil',
+          text: `Selamat datang ${user.displayName || user.email}!`,
+          customClass: {
+            confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
+          }
+        }).then(() => {
+          navigate('/dashboard');
+        });
+      });
     } catch (err) {
-      console.error('❌ Google login error:', err);
+      // Dapatkan IP & user agent
+      const ipAddress = await fetch("https://api.ipify.org?format=json")
+        .then(res => res.json())
+        .then(data => data.ip)
+        .catch(() => 'unknown');
+
+      const userAgent = navigator.userAgent;
+
+      // Simpan log login gagal
+      postLoginlogs({
+        user_id: '-', // user belum bisa diidentifikasi dari Firebase
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        status: 'failed',
+        failure_reason: 'Login Google gagal'
+      }, (res) => {
+        // console.log('Login log saved:', res);
+      });
+
+      // Tampilkan alert ke user
       Swal.fire({
         icon: 'error',
         title: 'Login Google gagal',

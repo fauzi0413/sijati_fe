@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { LuMessageCircleMore } from "react-icons/lu";
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown from "react-markdown";
 import Layout from "../components/Layout";
 
 const LazyLoader = () => (
@@ -13,48 +13,51 @@ const LazyLoader = () => (
   </div>
 );
 
-export default function DokumenDetail() {
-  const user = JSON.parse(localStorage.getItem('user'));
+export default function DashboardPage({ isWidgetMode = false }) {
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const bottomRef = useRef(null);
-  const userHasStarted = messages.some((msg) => msg.from === 'user');
+  const userHasStarted = messages.some((msg) => msg.from === "user");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  const handleSend = async (optionalInput) => {
+    const finalInput = optionalInput || input;
+    if (!finalInput.trim()) return;
 
-    const userMessage = { from: 'user', text: input };
+    const userMessage = { from: "user", text: finalInput };
     setMessages((prev) => [...prev, userMessage]);
-    setInput('');
+    setInput("");
     setIsLoading(true);
 
     const apiKey = process.env.REACT_APP_OPENROUTER_API_KEY;
     if (!apiKey) {
-      setMessages((prev) => [...prev, { from: 'bot', text: 'API key tidak tersedia.' }]);
+      setMessages((prev) => [
+        ...prev,
+        { from: "bot", text: "API key tidak tersedia." },
+      ]);
       setIsLoading(false);
       return;
     }
 
     try {
-      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
-          'HTTP-Referer': 'http://localhost:3000',
-          'X-Title': 'SiJati Chatbot'
+          "HTTP-Referer": "http://localhost:3000",
+          "X-Title": "SiJati Chatbot",
         },
         body: JSON.stringify({
-          model: 'deepseek/deepseek-chat-v3-0324:free',
+          model: "deepseek/deepseek-chat-v3-0324:free",
           messages: [
             {
-              role: 'system',
-              content: 'Kamu adalah asisten yang membantu dan selalu menjawab dalam bahasa Indonesia.'
+              role: "system",
+              content: "Kamu adalah asisten yang membantu dan selalu menjawab dalam bahasa Indonesia.",
             },
-            { role: 'user', content: input }
-          ]
-        })
+            { role: "user", content: finalInput },
+          ],
+        }),
       });
 
       const data = await res.json();
@@ -62,12 +65,12 @@ export default function DokumenDetail() {
 
       setMessages((prev) => [
         ...prev,
-        { from: 'bot', text: botReply || 'Maaf, tidak bisa menjawab saat ini.' }
+        { from: "bot", text: botReply || "Maaf, tidak bisa menjawab saat ini." },
       ]);
     } catch (error) {
       setMessages((prev) => [
         ...prev,
-        { from: 'bot', text: 'Terjadi kesalahan saat menghubungi server.' }
+        { from: "bot", text: "Terjadi kesalahan saat menghubungi server." },
       ]);
     } finally {
       setIsLoading(false);
@@ -75,77 +78,124 @@ export default function DokumenDetail() {
   };
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length > 1) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
 
-  return (
-    <Layout>
-      <div className="flex flex-col flex-1 h-full overflow-hidden">
-        <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 pb-32">
-          <div className={`flex flex-col items-center ${userHasStarted ? '' : 'justify-center h-full'}`}>
-            {!userHasStarted && (
-              <>
-                <h1 className="text-pink-500 text-2xl font-semibold mb-6 text-center">
-                  What can I help with?
-                </h1>
-                <div className="w-full max-w-3xl">
-                  <div className="flex items-center rounded-full bg-white px-6 py-3 shadow-md">
-                    <span className="text-gray-400 mr-3 text-xl"><LuMessageCircleMore /></span>
-                    <input
-                      type="text"
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      placeholder="Tulis pertanyaan..."
-                      className="flex-1 focus:outline-none text-sm"
-                      onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                    />
-                    <button onClick={handleSend} className="text-gray-400 ml-3 text-lg">➤</button>
-                  </div>
+  const recommendedQuestions = [
+    "Apa info terbaru dari Jakarta Timur?",
+    "Bagaimana cara membuat KTP di Jakarta Timur?",
+    "Siapa contact center Kominfo Jakarta Timur?",
+    "Kapan jadwal layanan keliling?",
+  ];
+
+  const content = (
+    <div className="flex flex-col flex-1 h-full overflow-hidden">
+      <main className={`flex-1 overflow-y-auto ${isWidgetMode ? "p-4" : "px-4 sm:px-6 pt-6 pb-32"}`}>
+        <div
+          className={`flex flex-col items-center ${
+            userHasStarted ? "" : "justify-end h-full"
+          }`}
+        >
+          {!userHasStarted && (
+            <>
+              <h1 className="text-pink-500 text-2xl font-semibold mb-6 text-center">
+                What can I help with?
+              </h1>
+
+              {/* Input awal */}
+              <div className="w-full max-w-3xl">
+                <div className="flex items-center rounded-full bg-white px-6 py-3 shadow-md">
+                  <span className="text-gray-400 mr-3 text-xl">
+                    <LuMessageCircleMore />
+                  </span>
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Tulis pertanyaan..."
+                    className="flex-1 focus:outline-none text-sm"
+                    onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                  />
+                  <button onClick={() => handleSend()} className="text-gray-400 ml-3 text-lg">
+                    ➤
+                  </button>
                 </div>
-              </>
-            )}
-
-            {messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`w-fit max-w-[80%] sm:max-w-[60%] px-4 py-2 rounded-lg text-sm shadow my-1 whitespace-pre-wrap ${
-                  msg.from === 'user'
-                    ? 'bg-blue-100 self-end text-right ml-auto'
-                    : 'bg-gray-200 self-start'
-                }`}
-              >
-                {msg.from === 'bot' ? (
-                  <ReactMarkdown>{msg.text}</ReactMarkdown>
-                ) : (
-                  msg.text
-                )}
               </div>
-            ))}
-            {isLoading && <LazyLoader />}
 
-            <div ref={bottomRef} />
-          </div>
-        </main>
-
-        {userHasStarted && (
-          <div className="fixed bottom-4 left-4 right-4 sm:left-64 sm:right-6 z-40">
-            <div className="max-w-3xl mx-auto">
-              <div className="flex items-center rounded-full bg-white px-6 py-3 shadow-md">
-                <span className="text-gray-400 mr-3 text-xl"><LuMessageCircleMore /></span>
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Tulis pertanyaan..."
-                  className="flex-1 focus:outline-none text-sm"
-                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                />
-                <button onClick={handleSend} className="text-gray-400 ml-3 text-lg">➤</button>
+              {/* Rekomendasi pertanyaan dengan jarak */}
+              <div className="w-full max-w-3xl my-10 space-y-2">
+                <p className="text-sm font-bold text-gray-500 mb-2">
+                  Pertanyaan populer seputar Jakarta Timur
+                </p>
+                {recommendedQuestions.map((q, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSend(q)}
+                    className="w-full text-left bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-md shadow transition"
+                  >
+                    {q}
+                  </button>
+                ))}
               </div>
+            </>
+          )}
+
+          {/* Chat bubbles */}
+          {messages.map((msg, index) => (
+            <div
+              key={index}
+              className={`max-w-[80%] sm:max-w-[80%] px-4 py-2 rounded-lg text-sm shadow my-1 whitespace-pre-wrap ${
+                msg.from === "user"
+                  ? "bg-blue-100 self-end text-left ml-auto"
+                  : "bg-gray-200 self-start text-left ml-0"
+              }`}
+            >
+              {msg.from === "bot" ? (
+                <ReactMarkdown>{msg.text}</ReactMarkdown>
+              ) : (
+                msg.text
+              )}
+            </div>
+          ))}
+
+          {isLoading && <LazyLoader />}
+          <div ref={bottomRef} />
+        </div>
+      </main>
+
+      {/* Input tetap di bawah setelah mulai chat */}
+      {userHasStarted && (
+        <div
+          className={`${
+            isWidgetMode
+              ? "w-full px-4 mt-2 mb-4"
+              : "fixed bottom-4 left-4 right-4 sm:left-64 sm:right-6 z-40"
+          }`}
+        >
+          <div className="max-w-3xl mx-auto">
+            <div className="flex items-center rounded-full bg-white px-6 py-3 shadow-md">
+              <span className="text-gray-400 mr-3 text-xl">
+                <LuMessageCircleMore />
+              </span>
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Tulis pertanyaan..."
+                className="flex-1 focus:outline-none text-sm"
+                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              />
+              <button onClick={() => handleSend()} className="text-gray-400 ml-3 text-lg">
+                ➤
+              </button>
             </div>
           </div>
-        )}
-      </div>
-    </Layout>
+        </div>
+      )}
+    </div>
   );
+
+  return isWidgetMode ? content : <Layout>{content}</Layout>;
 }

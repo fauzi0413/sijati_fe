@@ -8,6 +8,7 @@ import bgImage from '../assets/bg-biru.png';
 import Swal from 'sweetalert2';
 import { IoMdArrowRoundBack } from 'react-icons/io';
 import { postUser } from '../api/axios';
+import bcrypt from 'bcryptjs';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ const RegisterPage = () => {
       return Swal.fire({
         icon: 'error',
         title: 'Password tidak cocok',
-        text: 'Konfirmasi password harus sama.',
+        text: 'Konfirmasi password harus sama',
         customClass: {
           confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
         },
@@ -56,13 +57,14 @@ const RegisterPage = () => {
       // 1. Registrasi ke Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
+      const hashedPassword = await bcrypt.hash(password, 10);
 
       // 2. Simpan ke database lokal
       const userData = {
         user_id: firebaseUser.uid, // atau UUID manual
         username,
         email,
-        password,
+        password:hashedPassword,
         role: 'user', // default role
         created_at: new Date(),
         updated_at: new Date()
@@ -87,7 +89,7 @@ const RegisterPage = () => {
         Swal.fire({
           icon: 'warning',
           title: 'Email sudah terdaftar, silahkan login',
-          text: 'Konfirmasi password harus sama.',
+          text: 'Silahkan gunakan email lain atau login jika sudah memiliki akun.',
           customClass: {
             confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
           },

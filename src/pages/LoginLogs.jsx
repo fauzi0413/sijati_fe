@@ -61,7 +61,7 @@ export default function LoginLogs() {
             </thead>
 
             <tbody>
-              {filteredLogs.map((log) => (
+              {filteredLogs.sort((a, b) => new Date(b.login_time) - new Date(a.login_time)).map((log) => (
                 <tr key={log.log_id} className="border-b">
                   <td
                     className="px-4 py-2 text-blue-600 underline cursor-pointer"

@@ -7,11 +7,38 @@ import {
   PaperClipIcon,
   ChatBubbleOvalLeftEllipsisIcon,
 } from "@heroicons/react/24/outline";
-import { UserPlusIcon, UsersIcon } from "lucide-react";
+import { History, UserPlusIcon, UsersIcon } from "lucide-react";
+import { useLocation } from "react-router-dom";
 
 export default function Sidebar({ isOpen = false, onClose = () => {} }) {
+  const location = useLocation();
+  const pathParts = location.pathname.split("/");
+  const session_id = pathParts.includes("dashboard") ? pathParts[2] : null;
   const user = JSON.parse(localStorage.getItem("user"));
   const isMobile = window.innerWidth < 640;
+
+  const chatHistory = [
+    "Bagaimana cara kerja AI?",
+    "Apa itu machine learning?",
+    "Fungsi chatbot SI JATI?",
+    "Dokumen terakhir saya?",
+    "Apakah data saya aman?",
+    "Bagaimana cara kerja AI?",
+    "Apa itu machine learning?",
+    "Fungsi chatbot SI JATI?",
+    "Dokumen terakhir saya?",
+    "Apakah data saya aman?",
+    "Bagaimana cara kerja AI?",
+    "Apa itu machine learning?",
+    "Fungsi chatbot SI JATI?",
+    "Dokumen terakhir saya?",
+    "Apakah data saya aman?",
+    "Bagaimana cara kerja AI?",
+    "Apa itu machine learning?",
+    "Fungsi chatbot SI JATI?",
+    "Dokumen terakhir saya?",
+    "Apakah data saya aman?",
+  ];
 
   return (
     <>
@@ -20,9 +47,38 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
         <h1 className="text-xl font-bold">
           <Link to="/">SI JATI</Link>
         </h1>
-        <nav className="space-y-5">
-          <NavLinks user={user} />
-        </nav>
+
+        {/* Wrapper utama agar navigasi dan chat bisa diatur posisi */}
+        <div className="flex flex-col flex-1">
+          {/* Navigasi utama */}
+          <nav className="space-y-5">
+            <NavLinks user={user?.displayName || null} />
+          </nav>
+
+          {/* Chat History di bagian bawah */}
+          {user && session_id && (
+            <div className="mt-auto">
+              <h3 className="flex items-center text-gray-400 gap-2 text-sm font-semibold uppercase mb-2">
+                <History className="w-5 h-5" />
+                Chats History
+              </h3>
+              <div className="overflow-y-auto max-h-48 pr-1 scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent">
+                <ul className="space-y-1">
+                  {chatHistory.map((chat, index) => (
+                    <li
+                      key={index}
+                      className={`px-3 py-2 text-sm rounded cursor-pointer hover:bg-pink-600 ${
+                        index === 0 ? "bg-pink-500 text-white" : "text-white"
+                      }`}
+                    >
+                      {chat}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </div>
       </aside>
 
       {/* Mobile sidebar overlay */}
@@ -40,6 +96,25 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
             </h1>
             <nav className="space-y-5">
               <NavLinks user={user} />
+
+              {/* Chat History */}
+              {user && session_id && (
+                <div className="mt-8">
+                  <h3 className="text-sm text-gray-300 font-semibold uppercase mb-2">Chats</h3>
+                  <ul className="space-y-1">
+                    {chatHistory.map((chat, index) => (
+                      <li
+                        key={index}
+                        className={`px-3 py-2 text-sm rounded cursor-pointer hover:bg-pink-600 ${
+                          index === 0 ? "bg-pink-500 text-white" : "text-white"
+                        }`}
+                      >
+                        {chat}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </nav>
           </div>
         </div>

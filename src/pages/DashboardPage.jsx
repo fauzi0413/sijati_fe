@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { LuMessageCircleMore } from "react-icons/lu";
 import ReactMarkdown from "react-markdown";
 import Layout from "../components/Layout";
+import { useParams } from "react-router-dom";
+import { postChatHistory } from "../api/axios";
 
 const LazyLoader = () => (
   <div className="w-full flex justify-start my-2">
@@ -14,6 +16,7 @@ const LazyLoader = () => (
 );
 
 export default function DashboardPage({ isWidgetMode = false }) {
+  const { session_id } = useParams(); // ✅ dipindahkan ke dalam komponen
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const bottomRef = useRef(null);
@@ -67,7 +70,24 @@ export default function DashboardPage({ isWidgetMode = false }) {
         ...prev,
         { from: "bot", text: botReply || "Maaf, tidak bisa menjawab saat ini." },
       ]);
+
+      // Ambil user ID dari localStorage jika login
+      const user = JSON.parse(localStorage.getItem("user"));
+      const user_id = user?.user_id || null;
+
+      // Simpan ke database
+      await postChatHistory({
+        session_id,
+        user_id: user_id || user.uid || null,
+        user_message: finalInput,
+        retrieved_context: "-", // bisa diisi nanti dengan context RAG
+        bot_response: botReply || "Maaf, tidak bisa menjawab saat ini.",
+      }, () => {
+        console.log("✅ Chat berhasil disimpan ke database.");
+      });
+
     } catch (error) {
+      console.error("Error:", error);
       setMessages((prev) => [
         ...prev,
         { from: "bot", text: "Terjadi kesalahan saat menghubungi server." },
@@ -124,7 +144,7 @@ export default function DashboardPage({ isWidgetMode = false }) {
                 </div>
               </div>
 
-              {/* Rekomendasi pertanyaan dengan jarak */}
+              {/* Rekomendasi pertanyaan */}
               <div className="w-full max-w-3xl my-10 space-y-2">
                 <p className="text-sm font-bold text-gray-500 mb-2">
                   Pertanyaan populer seputar Jakarta Timur
@@ -165,7 +185,7 @@ export default function DashboardPage({ isWidgetMode = false }) {
         </div>
       </main>
 
-      {/* Input tetap di bawah setelah mulai chat */}
+      {/* Input tetap di bawah */}
       {userHasStarted && (
         <div
           className={`${

@@ -212,3 +212,62 @@ export const postLoginlogs = async (payload, callback) => {
       console.error('Gagal mengirim data:', error);
   }
 };
+
+// FETCH API CHAT HISTORY
+export const getChatHistory = (callback) => {
+  axios
+  .get(`${baseURLBackEnd}/chat-history`)
+  .then((res) => {
+    callback(res.data)
+  }).catch((err) => {
+    console.log(err)
+  })
+}
+
+export const getChatHistoryByID = (id, callback) => {
+  axios
+  .get(`${baseURLBackEnd}/chat-history/${id}`)  
+  .then((res) => {
+    callback(res.data)
+  }).catch((err) => {
+    console.log(err)
+  })
+}
+
+export const postChatHistory = async (payload, callback) => {
+  try {
+      const response = await axios.post(`${baseURLBackEnd}/chat-history`, payload, {
+          headers: {
+              'Content-Type': 'application/json'
+          }
+      });
+      console.log("Post Success:", response.data); // debug
+      callback(response.data); // Jika sukses, panggil callback
+  } catch (error) {
+      console.error('Gagal mengirim data:', error);
+  }
+};
+
+export const putChatHistory = async (id, payload, callback) => {
+  try {
+      const response = await axios.put(`${baseURLBackEnd}/chat-history/${id}`, payload, {
+          headers: {
+              'Content-Type': 'application/json'
+          }
+      });
+      // console.log("Update Success:", response.data); // debug
+      callback(response.data); // Jika sukses, panggil callback
+  } catch (error) {
+      console.error('Gagal mengirim data:', error);
+  }
+};
+
+export const deleteChatHistoryById = (id, callback) => {
+  axios
+  .delete(`${baseURLBackEnd}/chat-history/${id}`)  
+  .then((res) => {
+    callback(res.data)
+  }).catch((err) => {
+    console.log(err)
+  })
+}

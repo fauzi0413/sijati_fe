@@ -8,6 +8,19 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const [isChatOpen, setIsChatOpen] = useState(false);
 
+  const handleExplore = () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (user) {
+      // Jika login, arahkan ke /dashboard/:session_id
+      const sessionId = crypto.randomUUID(); // Bisa juga pakai Math.random() jika ingin numerik
+      navigate(`/dashboard/${sessionId}`);
+    } else {
+      // Jika belum login, arahkan ke dashboard biasa
+      navigate("/dashboard");
+    }
+  };
+
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center text-center px-4 relative"
@@ -27,7 +40,7 @@ const LandingPage = () => {
       </p>
 
       <button
-        onClick={() => navigate("/dashboard")}
+        onClick={handleExplore}
         className="px-8 sm:px-12 py-3 sm:py-4 border border-white text-white text-sm sm:text-base md:text-lg rounded-full font-semibold hover:bg-white hover:text-[#0E2A7B] transition"
       >
         Let&apos;s Explore!

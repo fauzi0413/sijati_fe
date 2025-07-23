@@ -111,9 +111,7 @@ const LoginPage = () => {
             confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
           }
         }).then(() => {
-          const sessionId = crypto.randomUUID(); // UUID v4
-          localStorage.setItem("session_id", sessionId);
-          navigate(`/dashboard/${sessionId}`);
+          navigate(`/dashboard`);
         });
       } catch (err) {
         // Simpan log login pada database lokal
@@ -209,9 +207,7 @@ const LoginPage = () => {
             confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
           }
         }).then(() => {
-          const sessionId = crypto.randomUUID(); // UUID v4
-          localStorage.setItem("session_id", sessionId);
-          navigate(`/dashboard/${sessionId}`);
+          navigate(`/dashboard`);
         });
       });
     } catch (err) {

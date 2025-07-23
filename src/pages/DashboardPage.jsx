@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from "react";
 import { LuMessageCircleMore } from "react-icons/lu";
 import ReactMarkdown from "react-markdown";
 import Layout from "../components/Layout";
-import { useParams } from "react-router-dom";
-import { postChatHistory } from "../api/axios";
+import { useNavigate, useParams } from "react-router-dom";
+import { getChatHistoryBySessionID, postChatHistory } from "../api/axios";
+import { v4 as uuidv4 } from "uuid";
 
 const LazyLoader = () => (
   <div className="w-full flex justify-start my-2">
@@ -16,12 +17,56 @@ const LazyLoader = () => (
 );
 
 export default function DashboardPage({ isWidgetMode = false }) {
-  const { session_id } = useParams(); // ✅ dipindahkan ke dalam komponen
+  let { session_id } = useParams(); // ✅ dipindahkan ke dalam komponen
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const bottomRef = useRef(null);
   const userHasStarted = messages.some((msg) => msg.from === "user");
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+  if (session_id) {
+      getChatHistoryBySessionID(session_id, (data) => {
+        if (Array.isArray(data)) {
+          const formatted = data.map((entry) => ([
+            {
+              from: "user",
+              text: entry.user_message,
+              time: entry.created_at,
+            },
+            {
+              from: "bot",
+              text: entry.bot_response,
+              time: entry.created_at,
+            },
+          ])).flat();
+
+          setMessages(formatted);
+        }
+      });
+    }
+  }, [session_id]);
+
+  useEffect(() => {
+    // Jika URL adalah /dashboard (tanpa session_id), scroll ke atas
+    if (!session_id) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [session_id]);
+
+  useEffect(() => {
+    const handleResetChat = () => {
+      setMessages([]);
+      setInput("");
+    };
+
+    window.addEventListener("chatResetRequested", handleResetChat);
+
+    return () => {
+      window.removeEventListener("chatResetRequested", handleResetChat);
+    };
+  }, []);
 
   const handleSend = async (optionalInput) => {
     const finalInput = optionalInput || input;
@@ -42,8 +87,9 @@ export default function DashboardPage({ isWidgetMode = false }) {
       return;
     }
 
+    let user_id = "-";
     try {
-      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -52,7 +98,8 @@ export default function DashboardPage({ isWidgetMode = false }) {
           "X-Title": "SiJati Chatbot",
         },
         body: JSON.stringify({
-          model: "deepseek/deepseek-chat-v3-0324:free",
+          // model: "deepseek/deepseek-chat-v3-0324:free",
+          model: "llama-3.3-70b-versatile",
           messages: [
             {
               role: "system",
@@ -73,17 +120,26 @@ export default function DashboardPage({ isWidgetMode = false }) {
 
       // Ambil user ID dari localStorage jika login
       const user = JSON.parse(localStorage.getItem("user"));
-      const user_id = user?.user_id || null;
+      // const user_id = user?.user_id || null;
+      if (user && typeof user === "object") {
+        user_id = user.user_id || user.uid || "-";
+      }
+
+      if (!session_id) {
+        const newSessionId = uuidv4();
+        session_id = newSessionId;
+        navigate(`/dashboard/${newSessionId}`, { replace: true });
+      }
 
       // Simpan ke database
       await postChatHistory({
-        session_id,
-        user_id: user_id || user.uid || null,
+        session_id: session_id || "-",
+        user_id,
         user_message: finalInput,
         retrieved_context: "-", // bisa diisi nanti dengan context RAG
         bot_response: botReply || "Maaf, tidak bisa menjawab saat ini.",
       }, () => {
-        console.log("✅ Chat berhasil disimpan ke database.");
+        window.dispatchEvent(new Event("chatHistoryUpdated"));
       });
 
     } catch (error) {
@@ -102,6 +158,16 @@ export default function DashboardPage({ isWidgetMode = false }) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  const formatTime = (datetime) => {
+    if (!datetime) return "";
+    const date = new Date(datetime);
+    return date.toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  };
 
   const recommendedQuestions = [
     "Apa info terbaru dari Jakarta Timur?",
@@ -176,6 +242,11 @@ export default function DashboardPage({ isWidgetMode = false }) {
                 <ReactMarkdown>{msg.text}</ReactMarkdown>
               ) : (
                 msg.text
+              )}
+              {msg.time && (
+                <div className="text-[12px] text-gray-700 text-right mt-1">
+                  {formatTime(msg.time)}
+                </div>
               )}
             </div>
           ))}

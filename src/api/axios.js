@@ -1,4 +1,5 @@
 import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
 const baseURLBackEnd = process.env.REACT_APP_BASE_URL_BACKEND;
 
 // FETCH API FAQ MANUAL
@@ -271,3 +272,36 @@ export const deleteChatHistoryById = (id, callback) => {
     console.log(err)
   })
 }
+
+export const getChatHistoryBySessionID = (session_id, callback) => {
+  axios
+  .get(`${baseURLBackEnd}/chat-history/session/${session_id}`)  
+  .then((res) => {
+    callback(res.data)
+  }).catch((err) => {
+    console.log(err)
+  })
+}
+
+export const getGroupedChatHistoryByUserID = (user_id, callback) => {
+  axios
+    .get(`${baseURLBackEnd}/chat-history/user/${user_id}/grouped`)
+    .then((res) => callback(res.data))
+    .catch((err) => console.log(err));
+};
+
+export const createEmptySession = (user_id, callback) => {
+  const session_id = uuidv4(); // generate session acak
+  axios
+    .post(`${baseURLBackEnd}/chat-history`, {
+      session_id,
+      user_id,
+      created_at: new Date().toISOString(),
+    })
+    .then((res) => {
+      callback(session_id); // kembalikan session_id ke pemanggil
+    })
+    .catch((err) => {
+      console.error("Gagal buat session baru:", err);
+    });
+};

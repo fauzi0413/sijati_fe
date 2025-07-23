@@ -12,6 +12,7 @@ import NotFound from './pages/NotFound';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ManagementUser from './pages/ManagementUser';
 import LoginLogs from './pages/LoginLogs';
+import ChatHistory from './pages/ChatHistory';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
         <Route path="/dokumen/:id" element={<DokumenDetail />} />
         <Route path="/user-management" element={<ManagementUser />} /> 
         <Route path="/login-logs" element={<LoginLogs />} />
+        <Route path="/history" element={<ChatHistory />} />
 
         {/* Fallback untuk semua route yang tidak ditemukan */}
         <Route path="*" element={<NotFound />} />

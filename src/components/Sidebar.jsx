@@ -7,38 +7,67 @@ import {
   PaperClipIcon,
   ChatBubbleOvalLeftEllipsisIcon,
 } from "@heroicons/react/24/outline";
-import { History, UserPlusIcon, UsersIcon } from "lucide-react";
+import { ClockIcon, History, UserPlusIcon, UsersIcon } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { getChatHistoryBySessionID, getGroupedChatHistoryByUserID, getUserByID } from "../api/axios";
 
 export default function Sidebar({ isOpen = false, onClose = () => {} }) {
   const location = useLocation();
   const pathParts = location.pathname.split("/");
   const session_id = pathParts.includes("dashboard") ? pathParts[2] : null;
-  const user = JSON.parse(localStorage.getItem("user"));
   const isMobile = window.innerWidth < 640;
+  const [chatHistory, setChatHistory] = useState([]);
+  const [groupedChats, setGroupedChats] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [user, setUser] = useState(null);
 
-  const chatHistory = [
-    "Bagaimana cara kerja AI?",
-    "Apa itu machine learning?",
-    "Fungsi chatbot SI JATI?",
-    "Dokumen terakhir saya?",
-    "Apakah data saya aman?",
-    "Bagaimana cara kerja AI?",
-    "Apa itu machine learning?",
-    "Fungsi chatbot SI JATI?",
-    "Dokumen terakhir saya?",
-    "Apakah data saya aman?",
-    "Bagaimana cara kerja AI?",
-    "Apa itu machine learning?",
-    "Fungsi chatbot SI JATI?",
-    "Dokumen terakhir saya?",
-    "Apakah data saya aman?",
-    "Bagaimana cara kerja AI?",
-    "Apa itu machine learning?",
-    "Fungsi chatbot SI JATI?",
-    "Dokumen terakhir saya?",
-    "Apakah data saya aman?",
-  ];
+  useEffect(() => {
+    const localUser = JSON.parse(localStorage.getItem("user")); // ini bisa berisi uid
+    if (localUser?.uid) {
+      getUserByID(localUser.uid, (data) => {
+        setUser(data);
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    setCurrentUser(storedUser);
+  }, []);
+
+  useEffect(() => {
+    if (currentUser?.user_id || currentUser?.uid) {
+      const fetchGroupedChats = () => {
+        getGroupedChatHistoryByUserID(currentUser.user_id || currentUser.uid, (data) => {
+          const sortedData = [...data].sort((a, b) => {
+            const dateA = new Date(a.chats?.[0]?.created_at || 0);
+            const dateB = new Date(b.chats?.[0]?.created_at || 0);
+            return dateB - dateA; // Descending: terbaru di atas
+          });
+          setGroupedChats(sortedData);
+        });
+      };
+
+      fetchGroupedChats();
+
+      // ⬇️ Tambahkan listener custom event
+      window.addEventListener("chatHistoryUpdated", fetchGroupedChats);
+
+      // Cleanup
+      return () => {
+        window.removeEventListener("chatHistoryUpdated", fetchGroupedChats);
+      };
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (session_id) {
+      getChatHistoryBySessionID(session_id, (data) => {
+        setChatHistory(data);
+      });
+    }
+  }, [session_id]);
 
   return (
     <>
@@ -52,32 +81,38 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
         <div className="flex flex-col flex-1">
           {/* Navigasi utama */}
           <nav className="space-y-5">
-            <NavLinks user={user?.displayName || null} />
+            <NavLinks user={user || null} />
           </nav>
 
           {/* Chat History di bagian bawah */}
-          {user && session_id && (
+          {groupedChats.length > 0 && (
             <div className="mt-auto">
               <h3 className="flex items-center text-gray-400 gap-2 text-sm font-semibold uppercase mb-2">
                 <History className="w-5 h-5" />
                 Chats History
               </h3>
-              <div className="overflow-y-auto max-h-48 pr-1 scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent">
-                <ul className="space-y-1">
-                  {chatHistory.map((chat, index) => (
-                    <li
+
+              <div className="overflow-y-auto max-h-48 pr-1 scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent space-y-2">
+                {groupedChats.map((group, index) => {
+                  const firstMessage = group.chats[0]?.user_message?.trim() || "(tanpa pesan)";
+                  const isActive = group.session_id === session_id;
+
+                  return (
+                    <Link
                       key={index}
-                      className={`px-3 py-2 text-sm rounded cursor-pointer hover:bg-pink-600 ${
-                        index === 0 ? "bg-pink-500 text-white" : "text-white"
+                      to={`/dashboard/${group.session_id}`}
+                      className={`block p-2 rounded-lg transition truncate ${
+                        isActive ? "bg-pink-600 text-white font-semibold" : "bg-[#0E1C78] hover:bg-pink-600 text-white"
                       }`}
                     >
-                      {chat}
-                    </li>
-                  ))}
-                </ul>
+                      <p className="text-sm truncate">{firstMessage}</p>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           )}
+
         </div>
       </aside>
 
@@ -98,21 +133,31 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
               <NavLinks user={user} />
 
               {/* Chat History */}
-              {user && session_id && (
-                <div className="mt-8">
-                  <h3 className="text-sm text-gray-300 font-semibold uppercase mb-2">Chats</h3>
-                  <ul className="space-y-1">
-                    {chatHistory.map((chat, index) => (
-                      <li
-                        key={index}
-                        className={`px-3 py-2 text-sm rounded cursor-pointer hover:bg-pink-600 ${
-                          index === 0 ? "bg-pink-500 text-white" : "text-white"
-                        }`}
-                      >
-                        {chat}
-                      </li>
-                    ))}
-                  </ul>
+              {groupedChats.length > 0 && (
+                <div className="mt-auto">
+                  <h3 className="flex items-center text-gray-400 gap-2 text-sm font-semibold uppercase mb-2">
+                    <History className="w-5 h-5" />
+                    Chats History
+                  </h3>
+
+                  <div className="overflow-y-auto max-h-48 pr-1 scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-transparent space-y-2">
+                    {groupedChats.map((group, index) => {
+                      const firstMessage = group.chats[0]?.user_message?.trim() || "(tanpa pesan)";
+                      const isActive = group.session_id === session_id;
+
+                      return (
+                        <Link
+                          key={index}
+                          to={`/dashboard/${group.session_id}`}
+                          className={`block p-2 rounded-lg transition truncate ${
+                            isActive ? "bg-pink-600 text-white font-semibold" : "bg-[#0E1C78] hover:bg-pink-600 text-white"
+                          }`}
+                        >
+                          <p className="text-sm truncate">{firstMessage}</p>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </nav>
@@ -127,12 +172,16 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
 function NavLinks({ user }) {
   return (
     <>
-      <Link to="/dashboard" className="flex items-center gap-2 hover:text-gray-300">
+      <Link
+        to={'/dashboard'}
+        onClick={() => window.dispatchEvent(new Event("chatResetRequested"))}
+        className="flex items-center gap-2 hover:text-gray-300 cursor-pointer"
+      >
         <ChatBubbleOvalLeftEllipsisIcon className="w-5 h-5" />
         <span className="font-medium">Create Chat</span>
       </Link>
 
-      {user && (
+      {user && user.role === "admin" && (
         <>
           <Link to="/statistik" className="flex items-center gap-2 hover:text-gray-300">
             <ChartBarIcon className="w-5 h-5" />
@@ -153,6 +202,10 @@ function NavLinks({ user }) {
           <Link to="/login-logs" className="flex items-center gap-2 hover:text-gray-300">
             <UsersIcon className="w-5 h-5" />
             <span className="font-medium">Login Logs</span>
+          </Link>
+          <Link to="/history" className="flex items-center gap-2 hover:text-gray-300">
+            <ClockIcon className="w-5 h-5" />
+            <span className="font-medium">History</span>
           </Link>
         </>
       )}

@@ -21,7 +21,9 @@ export default function UploadDokumen() {
 
   useEffect(() => {
     getDocument((data) => {
-      setDocList(data);
+      // Urutkan dari terbaru ke terlama (descending)
+      const sorted = [...data].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      setDocList(sorted);
     });
   }, []);
 
@@ -44,7 +46,7 @@ export default function UploadDokumen() {
     }
 
     // 👇 Tambahkan validasi ukuran file di sini
-    if (selectedFile.size > 10 * 1024 * 1024) {
+    if (selectedFile.size > 100 * 1024 * 1024) {
       Swal.fire({
         icon: "error",
         title: "Ukuran file terlalu besar",
@@ -55,6 +57,17 @@ export default function UploadDokumen() {
       });
       return;
     }
+
+    // ✅ Tampilkan loading saat file dibaca & upload dimulai
+    Swal.fire({
+      title: "Sedang mengunggah...",
+      text: "Mohon tunggu sebentar.",
+      allowOutsideClick: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -71,6 +84,7 @@ export default function UploadDokumen() {
       if (editIndex !== null) {
         const id = docList[editIndex]?.doc_id;
         putDocument(id, payload, () => {
+          Swal.close();
           Swal.fire({
             icon: "success",
             title: "Dokumen diperbarui",
@@ -85,6 +99,7 @@ export default function UploadDokumen() {
         });
       } else {
         postDocument(payload, () => {
+          Swal.close();
           Swal.fire({
             icon: "success",
             title: "Dokument Berhasil di Upload!",
@@ -300,6 +315,7 @@ export default function UploadDokumen() {
               <table className="w-full text-sm text-left border-collapse">
                 <thead>
                   <tr className="border-b bg-gray-50 text-gray-600">
+                    <th className="py-3 px-4">No.</th>
                     <th className="py-3 px-4">Nama File</th>
                     <th className="py-3 px-4">Kategori</th>
                     <th className="py-3 px-4">Tanggal Upload</th>
@@ -310,6 +326,7 @@ export default function UploadDokumen() {
                 <tbody>
                   {docList.map((item, i) => (
                     <tr key={i} className="border-b hover:bg-gray-50 transition">
+                      <td className="py-3 px-4 w-[1%] whitespace-nowrap text-center">{i + 1}.</td>
                       <td className="py-3 px-4 max-w-0">
                         <Link
                           to={`/dokumen/${item.doc_id}`}

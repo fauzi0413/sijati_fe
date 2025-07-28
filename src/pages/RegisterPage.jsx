@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaCheck, FaEye, FaEyeSlash, FaTimes } from 'react-icons/fa';
 import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, provider } from '../firebase';
 import bgImage from '../assets/bg-biru.png';
@@ -22,11 +22,39 @@ const RegisterPage = () => {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: value
     }));
+
+    if (name === 'password') {
+      checkPasswordCriteria(value);
+    }
   };
+
+  const checkPasswordCriteria = (password) => {
+    setPasswordCriteria({
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      symbol: /[@$!%*?&]/.test(password)
+    });
+  };
+
+  const isPasswordStrong = (password) => {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return regex.test(password);
+  };
+
+  const [passwordCriteria, setPasswordCriteria] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    symbol: false
+  });
 
   const handleManualSignUp = async () => {
     const { email, password, confirmPassword, username } = formData;
@@ -47,6 +75,17 @@ const RegisterPage = () => {
         icon: 'error',
         title: 'Password tidak cocok',
         text: 'Konfirmasi password harus sama',
+        customClass: {
+          confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
+        },
+      });
+    }
+
+    if (!isPasswordStrong(password)) {
+      return Swal.fire({
+        icon: 'warning',
+        title: 'Password tidak valid',
+        html: 'Password minimal 8 karakter dan harus mengandung:<br>• Huruf besar<br>• Huruf kecil<br>• Angka<br>• Simbol (@$!%*?&)',
         customClass: {
           confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
         },
@@ -98,7 +137,7 @@ const RegisterPage = () => {
         Swal.fire({
           icon: 'error',
           title: 'Gagal registrasi',
-          text: 'Konfirmasi password harus sama.',
+          text: 'Password harus minimal 6 karakter.',
           customClass: {
             confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
           },
@@ -128,7 +167,7 @@ const RegisterPage = () => {
       className="min-h-screen flex items-center justify-center px-4 bg-cover bg-center"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <div className="bg-white shadow-md rounded-2xl px-6 pt-6 pb-8 w-full max-w-md sm:max-w-sm min-h-[580px]">
+      <div className="bg-white shadow-md rounded-2xl px-6 pt-6 pb-8 my-10 w-full max-w-md sm:max-w-sm min-h-[580px]">
         {/* Tombol Back */}
         <div className="mb-4">
           <button
@@ -171,6 +210,38 @@ const RegisterPage = () => {
               onClick={() => setShowConfirm(prev => !prev)}>
               {showConfirm ? <FaEyeSlash /> : <FaEye />}
             </span>
+          </div>
+          <div className="text-xs text-gray-600 mt-1 ml-1 space-y-1">
+            <p>
+              {passwordCriteria.length
+                ? <FaCheck className="text-green-600 inline mr-1" />
+                : <FaTimes className="text-red-500 inline mr-1" />}
+              Minimal 8 karakter
+            </p>
+            <p>
+              {passwordCriteria.uppercase
+                ? <FaCheck className="text-green-600 inline mr-1" />
+                : <FaTimes className="text-red-500 inline mr-1" />}
+              Huruf besar (A–Z)
+            </p>
+            <p>
+              {passwordCriteria.lowercase
+                ? <FaCheck className="text-green-600 inline mr-1" />
+                : <FaTimes className="text-red-500 inline mr-1" />}
+              Huruf kecil (a–z)
+            </p>
+            <p>
+              {passwordCriteria.number
+                ? <FaCheck className="text-green-600 inline mr-1" />
+                : <FaTimes className="text-red-500 inline mr-1" />}
+              Angka (0–9)
+            </p>
+            <p>
+              {passwordCriteria.symbol
+                ? <FaCheck className="text-green-600 inline mr-1" />
+                : <FaTimes className="text-red-500 inline mr-1" />}
+              Simbol (@$!%*?&)
+            </p>
           </div>
         </div>
 

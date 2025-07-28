@@ -36,11 +36,23 @@ export default function FAQPage() {
       return;
     }
 
+    // ✅ Tampilkan loading saat file dibaca & upload dimulai
+    Swal.fire({
+      title: "Sedang mengunggah...",
+      text: "Mohon tunggu sebentar.",
+      allowOutsideClick: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
     const payload = { question, answer, reference, kategori, user_id: userId };
 
     if (editIndex !== null) {
       const id = faqList[editIndex]?.faq_id;
       putFAQ(id, payload, () => {
+        Swal.close();
         Swal.fire({
           icon: "success",
           title: "FAQ diperbarui",
@@ -55,6 +67,7 @@ export default function FAQPage() {
       });
     } else {
       postFAQ(payload, () => {
+        Swal.close();
         Swal.fire({
           icon: "success",
           title: "FAQ ditambahkan",
@@ -115,15 +128,33 @@ export default function FAQPage() {
     });
   };
 
+  const handleShowDetail = (index) => {
+    const faq = faqList[index];
+
+    Swal.fire({
+      title: faq.question,
+      html: `
+        <div style="text-align: left;">
+          <p class="mb-5"><strong>Jawaban:</strong><br/>${faq.answer}</p>
+          <p class="mb-5"><strong>Referensi:</strong><br/><a href="${faq.reference}" target="_blank" style="color: #3B82F6;">${faq.reference}</a></p>
+          <p><strong>Kategori:</strong> ${faq.kategori}</p>
+        </div>
+      `,
+      width: 600,
+      showCloseButton: true,
+      showConfirmButton: false,
+      customClass: {
+        popup: 'rounded-md shadow',
+      }
+    });
+  };
+
   return (
     <Layout>
       <div className="p-8">
         <h1 className="text-2xl font-bold mb-6">Manajemen FAQ</h1>
 
         <div className="bg-white p-6 rounded-md shadow w-full mb-8">
-          {/* <h2 className="font-semibold text-base mb-4">
-            {editIndex !== null ? "Edit Pertanyaan" : "Tambah Pertanyaan"}
-          </h2> */}
           <div className="space-y-4">
             <div>
               <h2 className="block font-semibold text-base mb-3">Masukkan Pertanyaan</h2>
@@ -137,12 +168,12 @@ export default function FAQPage() {
             </div>
             <div>
               <h2 className="block font-semibold text-base mb-3">Masukkan Jawaban</h2>
-              <input
-                type="text"
+              <textarea
                 placeholder="Ex: SI JATI adalah Sistem Informasi Jakarta Timur"
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
-                className="w-full border border-gray-300 px-4 py-2 rounded bg-gray-50"
+                rows={4} // Bisa diubah sesuai kebutuhan
+                className="w-full border border-gray-300 px-4 py-2 rounded bg-gray-50 resize-none"
               />
             </div>
             <div>
@@ -198,6 +229,7 @@ export default function FAQPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-100">
               <tr className="font-semibold">
+                <th className="text-left font-medium px-3 py-2">No.</th>
                 <th className="text-left font-medium px-3 py-2">Pertanyaan</th>
                 <th className="text-left font-medium px-3 py-2">Kategori</th>
                 <th className="text-left font-medium px-3 py-2">Aksi</th>
@@ -206,7 +238,15 @@ export default function FAQPage() {
             <tbody>
               {faqList.map((item, i) => (
                 <tr key={i} className="border-t hover:bg-gray-50">
-                  <td className="px-3 py-2">{item.question}</td>
+                  <td className="px-3 py-2 w-[1%] whitespace-nowrap text-center">{i + 1}.</td>
+                  <td className="px-3 py-2">
+                    <span
+                      className="text-blue-600 hover:underline cursor-pointer"
+                      onClick={() => handleShowDetail(i)}
+                    >
+                      {item.question}
+                    </span>
+                  </td>
                   <td className="px-3 py-2">{item.kategori}</td>
                   <td className="px-3 py-2 flex items-center gap-2">
                     <PencilIcon

@@ -11,11 +11,12 @@ import { ClockIcon, History, UserPlusIcon, UsersIcon } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getChatHistoryBySessionID, getGroupedChatHistoryByUserID, getUserByID } from "../api/axios";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function Sidebar({ isOpen = false, onClose = () => {} }) {
   const location = useLocation();
   const pathParts = location.pathname.split("/");
-  const session_id = pathParts.includes("dashboard") ? pathParts[2] : null;
+  const session_id = pathParts.includes("chatbot") ? pathParts[2] : null;
   const isMobile = window.innerWidth < 640;
   const [chatHistory, setChatHistory] = useState([]);
   const [groupedChats, setGroupedChats] = useState([]);
@@ -24,8 +25,9 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
 
   useEffect(() => {
     const localUser = JSON.parse(localStorage.getItem("user")); // ini bisa berisi uid
-    if (localUser?.uid) {
-      getUserByID(localUser.uid, (data) => {
+    if (localUser?.uid || localUser?.user_id) {
+      const id = localUser.uid || localUser.user_id;
+      getUserByID(id, (data) => {
         setUser(data);
       });
     }
@@ -81,7 +83,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
         <div className="flex flex-col flex-1">
           {/* Navigasi utama */}
           <nav className="space-y-5">
-            <NavLinks user={user || null} />
+            <NavLinks user={user} />
           </nav>
 
           {/* Chat History di bagian bawah */}
@@ -100,7 +102,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
                   return (
                     <Link
                       key={index}
-                      to={`/dashboard/${group.session_id}`}
+                      to={`/chatbot/${group.session_id}`}
                       className={`block p-2 rounded-lg transition truncate ${
                         isActive ? "bg-pink-600 text-white font-semibold" : "bg-[#0E1C78] hover:bg-pink-600 text-white"
                       }`}
@@ -116,22 +118,40 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
         </div>
       </aside>
 
+      <AnimatePresence>
       {/* Mobile sidebar overlay */}
       {isMobile && isOpen && (
-        <div className="fixed inset-0 z-50 sm:hidden bg-black bg-opacity-40" onClick={onClose}>
-          <div
-            className="bg-[#050C56] text-white w-64 h-full p-6 space-y-6"
-            onClick={(e) => e.stopPropagation()}
+         <motion.div
+            className="fixed inset-0 z-50 sm:hidden bg-black bg-opacity-40"
+            onClick={onClose}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
-            <div className="flex justify-end mb-4">
-              <button onClick={onClose} className="text-white text-2xl">✕</button>
-            </div>
-            <h1 className="text-xl font-bold">
-              <Link to="/">SI JATI</Link>
-            </h1>
-            <nav className="space-y-5">
+            <motion.div
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
+                transition={{ duration: 0.25 }}
+                className="bg-[#050C56] text-white w-64 h-full p-6 flex flex-col justify-between"
+                onClick={(e) => e.stopPropagation()}
+            >
+            <div className="">
+              <div className="flex mb-4">
+                <h1 className="text-xl font-bold flex items-center gap-2">
+                  <Link to="/">SI JATI</Link>
+                </h1>
+                <button
+                  onClick={onClose}
+                  className="text-white text-2xl ms-auto p-1 rounded hover:bg-red-500 active:bg-red-800 transition-colors duration-150"
+                >
+                  ✕
+                </button>
+              </div>
               <NavLinks user={user} />
+            </div>
 
+            <nav className="space-y-5">
               {/* Chat History */}
               {groupedChats.length > 0 && (
                 <div className="mt-auto">
@@ -148,7 +168,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
                       return (
                         <Link
                           key={index}
-                          to={`/dashboard/${group.session_id}`}
+                          to={`/chatbot/${group.session_id}`}
                           className={`block p-2 rounded-lg transition truncate ${
                             isActive ? "bg-pink-600 text-white font-semibold" : "bg-[#0E1C78] hover:bg-pink-600 text-white"
                           }`}
@@ -161,9 +181,10 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
                 </div>
               )}
             </nav>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </>
   );
 }
@@ -173,9 +194,9 @@ function NavLinks({ user }) {
   return (
     <>
       <Link
-        to={'/dashboard'}
+        to={'/chatbot'}
         onClick={() => window.dispatchEvent(new Event("chatResetRequested"))}
-        className="flex items-center gap-2 hover:text-gray-300 cursor-pointer"
+        className="flex items-center gap-2 hover:text-gray-300 cursor-pointer mb-3"
       >
         <ChatBubbleOvalLeftEllipsisIcon className="w-5 h-5" />
         <span className="font-medium">Create Chat</span>
@@ -183,27 +204,27 @@ function NavLinks({ user }) {
 
       {user && user.role === "admin" && (
         <>
-          <Link to="/statistik" className="flex items-center gap-2 hover:text-gray-300">
+          <Link to="/statistik" className="flex items-center gap-2 hover:text-gray-300 mb-3">
             <ChartBarIcon className="w-5 h-5" />
             <span className="font-medium">Chat Statistics</span>
           </Link>
-          <Link to="/faq" className="flex items-center gap-2 hover:text-gray-300">
+          <Link to="/faq" className="flex items-center gap-2 hover:text-gray-300 mb-3">
             <ChatBubbleLeftRightIcon className="w-5 h-5" />
             <span className="font-medium">Manage FAQ</span>
           </Link>
-          <Link to="/upload" className="flex items-center gap-2 hover:text-gray-300">
+          <Link to="/upload" className="flex items-center gap-2 hover:text-gray-300 mb-3">
             <PaperClipIcon className="w-5 h-5" />
             <span className="font-medium">Upload Document</span>
           </Link>
-          <Link to="/user-management" className="flex items-center gap-2 hover:text-gray-300">
+          <Link to="/user-management" className="flex items-center gap-2 hover:text-gray-300 mb-3">
             <UserPlusIcon className="w-5 h-5" />
             <span className="font-medium">Management User</span>
           </Link>
-          <Link to="/login-logs" className="flex items-center gap-2 hover:text-gray-300">
+          <Link to="/login-logs" className="flex items-center gap-2 hover:text-gray-300 mb-3">
             <UsersIcon className="w-5 h-5" />
             <span className="font-medium">Login Logs</span>
           </Link>
-          <Link to="/history" className="flex items-center gap-2 hover:text-gray-300">
+          <Link to="/history" className="flex items-center gap-2 hover:text-gray-300 mb-3">
             <ClockIcon className="w-5 h-5" />
             <span className="font-medium">History</span>
           </Link>

@@ -154,6 +154,7 @@ export default function ManagementUser() {
       title: `<strong>Detail User</strong>`,
       html: `
         <div class="text-left text-sm leading-relaxed space-y-2">
+          <p><strong>User ID:</strong> ${user.user_id}</p>
           <p><strong>Username:</strong> ${user.username}</p>
           <p><strong>Email:</strong> ${user.email}</p>
           <p><strong>Role:</strong> ${user.role}</p>
@@ -209,6 +210,7 @@ export default function ManagementUser() {
             <thead className="bg-blue-500 text-white">
               <tr>
                 <th className="py-3 px-4">No</th>
+                <th className="hidden sm:table-cell py-3 px-4">User ID</th>
                 <th className="hidden sm:table-cell py-3 px-4">Username</th>
                 <th className="py-3 px-4">Email</th>
                 <th className="py-3 px-4">Role</th>
@@ -221,6 +223,7 @@ export default function ManagementUser() {
               {filteredUsers.map((user, idx) => (
                 <tr key={idx} className="border-b hover:bg-gray-50">
                   <td className="py-2 px-4">{idx + 1}.</td>
+                  <td className="hidden sm:table-cell py-2 px-4">{user.user_id.slice(0, 6)}...</td>
                   <td className="hidden sm:table-cell py-2 px-4">{user.username}</td>
                   <td className="py-2 px-4">
                     <span className="hidden sm:block">{user.email}</span>

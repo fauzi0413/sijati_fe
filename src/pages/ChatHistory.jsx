@@ -122,17 +122,15 @@ export default function ChatHistory() {
                         className="border-b align-top hover:bg-gray-50"
                     >
                         {/* ✅ Desktop version */}
-                         <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                        {/* <td className="py-2 px-2 sm:table-cell">{index + 1}</td> */}
+                        <td className="py-2 px-2 break-words">{(currentPage - 1) * itemsPerPage + index + 1}.</td>
                         <td className="py-2 px-2 break-words">
-                        <a
+                        <button
                             onClick={() => setSelectedChat(item)}
                             className="text-blue-600 hover:underline"
                             title="Lihat detail"
-                            role="button"
                         >
                             {item.chat_id?.slice(0, 6)}...{item.chat_id?.slice(-3)}
-                        </a>
+                        </button>
                         </td>
                         <td className="py-2 px-2 break-words hidden sm:table-cell">
                         <span title={item.session_id}>

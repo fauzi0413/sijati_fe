@@ -27,7 +27,7 @@ const LandingPage = () => {
       </p>
 
       <button
-        onClick={() => navigate("/dashboard")}
+        onClick={() => navigate("/chatbot")}
         className="px-8 sm:px-12 py-3 sm:py-4 border border-white text-white text-sm sm:text-base md:text-lg rounded-full font-semibold hover:bg-white hover:text-[#0E2A7B] transition"
       >
         Let&apos;s Explore!

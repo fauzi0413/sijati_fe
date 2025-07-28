@@ -305,3 +305,51 @@ export const createEmptySession = (user_id, callback) => {
       console.error("Gagal buat session baru:", err);
     });
 };
+
+export const getTotalChatCount = (range, callback) => {
+  const url =
+    range === "all"
+      ? `${baseURLBackEnd}/chat-history/stats/count`
+      : `${baseURLBackEnd}/chat-history/stats/count/${range}`;
+
+  axios
+    .get(url)
+    .then((res) => callback(res.data))
+    .catch((err) => console.error(err));
+};
+
+export const getPopularTopics = (callback) => {
+  axios
+    .get(`${baseURLBackEnd}/chat-history/stats/topics`)
+    .then((res) => callback(res.data))
+    .catch((err) => console.error(err));
+};
+
+export const getHourlyChatStats = (callback) => {
+  axios
+    .get(`${baseURLBackEnd}/chat-history/stats/hourly`)
+    .then((res) => callback(res.data))
+    .catch((err) => console.error(err));
+};
+
+export const getHourlyLoginStats = (callback) => {
+  axios
+    .get(`${baseURLBackEnd}/login-logs/stats/hourly`)
+    .then((res) => callback(res.data))
+    .catch((err) => console.error(err));
+};
+
+export const getFaqCategoryStats = (callback) => {
+  axios
+    .get(`${baseURLBackEnd}/faq-manual/stats/category`) 
+    .then((res) => callback(res.data))
+    .catch((err) => console.error(err));
+};
+
+export const getDocumentCategoryStats = (callback) => {
+  axios
+    .get(`${baseURLBackEnd}/document/stats/category`)
+    .then((res) => callback(res.data))
+    .catch((err) => console.error(err));
+};
+

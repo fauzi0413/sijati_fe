@@ -19,16 +19,16 @@ export default function DokumenDetail() {
     getDocumentByID(id, (data) => {
       setDokumen(data);
 
-      // Cek apakah chunks adalah array
       if (Array.isArray(data.chunks)) {
-        setChunks(data.chunks);
+        setChunks(data.chunks.map((text, i) => ({ id: i + 1, text })));
       } else if (typeof data.chunks === "string") {
-        // Pisahkan string berdasarkan baris jika perlu
-        const lines = data.chunks
-          .split("\n")
-          .filter((line) => line.trim() !== "")
+        const parts = data.chunks
+          .split(",")
+          .map((t) => t.trim())
+          .filter((t) => t.length > 0)
           .map((text, i) => ({ id: i + 1, text }));
-        setChunks(lines);
+
+        setChunks(parts);
       } else {
         setChunks([]);
       }
@@ -140,19 +140,12 @@ export default function DokumenDetail() {
           <div>
             <h2 className="text-xl font-semibold mb-4">Chunks</h2>
             <div className="space-y-3 max-w-3xl">
-              {chunks.length > 0 ? (
-                chunks.map((chunk, i) => (
-                  <div
-                    key={i}
-                    className="bg-white border rounded-lg px-4 py-2 text-sm whitespace-pre-line"
-                  >
-                    <span className="font-semibold mr-2 text-xs">#{i + 1}</span>
-                    <span>{chunk.text}</span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-500 text-sm">Tidak ada potongan teks tersedia.</p>
-              )}
+              {chunks.map((chunk, i) => (
+                <div key={i} className="bg-white border rounded-lg px-4 py-2 text-sm whitespace-pre-line">
+                  <span className="font-semibold mr-2 text-xs">#{i + 1}</span>
+                  <span>{chunk.text || chunk}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>

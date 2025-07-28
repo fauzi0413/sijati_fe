@@ -111,7 +111,7 @@ const LoginPage = () => {
             confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
           }
         }).then(() => {
-          navigate(`/dashboard`);
+          navigate(`/chatbot`);
         });
       } catch (err) {
         // Simpan log login pada database lokal
@@ -207,7 +207,7 @@ const LoginPage = () => {
             confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
           }
         }).then(() => {
-          navigate(`/dashboard`);
+          navigate(`/chatbot`);
         });
       });
     } catch (err) {
@@ -251,7 +251,7 @@ const LoginPage = () => {
         {/* Tombol Back */}
         <div className="mb-4">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/chatbot')}
             className="flex items-center space-x-2 text-gray-700 hover:bg-gray-100 px-3 py-2 rounded transition"
           >
             <IoMdArrowRoundBack className="text-xl" />
@@ -303,6 +303,16 @@ const LoginPage = () => {
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </span>
           </div>
+
+          <div className="text-right mt-1">
+            <button
+              onClick={() => navigate('/reset-password')}
+              className="text-sm text-blue-500 hover:underline"
+            >
+              Lupa Password?
+            </button>
+          </div>
+          
         </div>
 
         <button

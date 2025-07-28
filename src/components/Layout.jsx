@@ -3,6 +3,10 @@ import { Link } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import { FiSettings, FiLogOut } from "react-icons/fi";
 import { IoMdArrowBack } from "react-icons/io";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "../firebase";
+import Swal from "sweetalert2";
+
 
 export default function Layout({ children }) {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -20,8 +24,68 @@ export default function Layout({ children }) {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    window.location.href = "/dashboard";
+    Swal.fire({
+      title: "Yakin ingin logout?",
+      text: "Kamu akan keluar dari sesi saat ini.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Ya, logout",
+      cancelButtonText: "Batal",
+      customClass: {
+        confirmButton: "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded mr-2",
+        cancelButton: "bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded",
+      },
+      buttonsStyling: false,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        localStorage.removeItem("user");
+
+        let countdown = 30;
+        let countdownInterval;
+
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil logout",
+          html: `Anda telah keluar dari sesi saat ini.<br><strong>Tertutup dalam <span id="timer">${countdown}</span> detik</strong>`,
+          showConfirmButton: true,
+          confirmButtonText: "OK",
+          customClass: {
+            confirmButton: "bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded",
+            popup: "rounded-lg shadow-lg",
+            title: "text-xl",
+            htmlContainer: "text-sm text-gray-700 text-center",
+          },
+          buttonsStyling: false,
+          didOpen: () => {
+            const btn = Swal.getConfirmButton();
+            if (btn) btn.focus();
+
+            const timerEl = document.getElementById("timer");
+
+            countdownInterval = setInterval(() => {
+              countdown--;
+              if (timerEl) timerEl.textContent = countdown;
+
+              if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                Swal.close();
+                window.location.href = "/chatbot";
+              }
+            }, 1000);
+          },
+          willClose: () => {
+            clearInterval(countdownInterval); // pastikan interval dibersihkan jika user klik OK lebih awal
+          },
+        }).then(() => {
+          window.location.href = "/chatbot"; // jika user klik OK
+        });
+
+        // atau auto redirect setelah 30 detik
+        setTimeout(() => {
+          window.location.href = "/chatbot";
+        }, 30000);
+      }
+    });
   };
 
   useEffect(() => {
@@ -34,6 +98,54 @@ export default function Layout({ children }) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  
+  const handleResetPasswordLink = async () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user || !user.email) {
+      return Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: "Email pengguna tidak tersedia. Pastikan Anda sudah login.",
+        confirmButtonText: "OK",
+        customClass: {
+          confirmButton: "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded",
+        },
+      });
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, user.email);
+      Swal.fire({
+        icon: "success",
+        title: "Email terkirim",
+        text: `Link reset password telah dikirim ke ${user.email}.`,
+        confirmButtonText: "OK",
+        customClass: {
+          confirmButton: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded",
+        },
+      });
+    } catch (err) {
+      console.error(err);
+      let message = "Terjadi kesalahan.";
+      if (err.code === "auth/user-not-found") {
+        message = "Email tidak ditemukan.";
+      } else if (err.code === "auth/invalid-email") {
+        message = "Format email tidak valid.";
+      }
+
+      Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: message,
+        confirmButtonText: "OK",
+        customClass: {
+          confirmButton: "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded",
+        },
+      });
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -72,7 +184,7 @@ export default function Layout({ children }) {
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                        user?.displayName || "User"
+                        user?.displayName || user?.username || "User"
                       )}&background=random&rounded=true`;
                     }}
                   />
@@ -119,12 +231,12 @@ export default function Layout({ children }) {
                         onError={(e) => {
                           e.target.onerror = null;
                           e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                            user?.displayName || "User"
+                            user?.displayName || user?.username || "User"
                           )}&background=random&rounded=true`;
                         }}
                       />
                       <span className="font-semibold">
-                        {user?.displayName || "User"}
+                        {user?.displayName || user?.username || "User"}
                       </span>
                     </div>
 
@@ -137,7 +249,7 @@ export default function Layout({ children }) {
                         <label className="text-xs text-gray-500">Username</label>
                         <input
                           className="w-full border px-3 py-1 rounded text-sm"
-                          value={user?.displayName || ""}
+                          value={user?.displayName || user?.username || ""}
                           readOnly
                         />
                       </div>
@@ -150,12 +262,12 @@ export default function Layout({ children }) {
                         />
                       </div>
                       <div className="text-right mt-2">
-                        <Link
-                          to="/reset-password"
+                        <button
+                          onClick={handleResetPasswordLink}
                           className="text-sm text-blue-500 hover:underline"
                         >
                           Reset Password?
-                        </Link>
+                        </button>
                       </div>
                     </div>
                   </div>

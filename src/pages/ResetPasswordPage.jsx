@@ -1,56 +1,55 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "../firebase";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 import bgImage from "../assets/bg-biru.png";
 
 export default function ResetPasswordPage() {
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [email, setEmail] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleReset = async (e) => {
     e.preventDefault();
 
-    // Validasi form kosong
-    if (!newPassword || !confirmPassword) {
-      Swal.fire({
+    if (!email) {
+      return Swal.fire({
         icon: "warning",
-        title: "Form tidak lengkap",
-        text: "Password baru dan konfirmasi harus diisi!",
+        title: "Email dibutuhkan",
+        text: "Silakan masukkan email Anda terlebih dahulu.",
+        customClass: {
+          confirmButton: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded",
+        },
       });
-      return;
     }
 
-    // Validasi password tidak cocok
-    if (newPassword !== confirmPassword) {
-      Swal.fire({
-        icon: "error",
-        title: "Gagal",
-        text: "Password tidak cocok!",
-      });
-      return;
-    }
-
-    // Tampilkan loading
-    Swal.fire({
-      title: "Resetting Password...",
-      allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading();
-      },
-    });
-
-    // Simulasi delay (ganti dengan API call jika ada backend)
-    setTimeout(() => {
+    try {
+      await sendPasswordResetEmail(auth, email);
       Swal.fire({
         icon: "success",
-        title: "Berhasil",
-        text: "Password berhasil direset!",
-        confirmButtonText: "OK",
+        title: "Email terkirim",
+        text: "Silakan cek email Anda untuk mereset password.",
+        customClass: {
+          confirmButton: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded",
+        },
       }).then(() => {
         navigate("/login");
       });
-    }, 1500);
+    } catch (err) {
+      console.error(err);
+      let message = "Terjadi kesalahan.";
+      if (err.code === "auth/user-not-found") {
+        message = "Email tidak ditemukan.";
+      } else if (err.code === "auth/invalid-email") {
+        message = "Format email tidak valid.";
+      }
+
+      Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: message,
+      });
+    }
   };
 
   return (
@@ -59,35 +58,21 @@ export default function ResetPasswordPage() {
       style={{ backgroundImage: `url(${bgImage})` }}
     >
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
-        <h2 className="text-center text-2xl font-semibold mb-6 text-gray-800">
-          Reset Password
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">New Password</label>
-            <input
-              type="password"
-              className="w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Confirm Password</label>
-            <input
-              type="password"
-              className="w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-          </div>
+        <h2 className="text-2xl font-semibold mb-6 text-center">Reset Password</h2>
+        <form onSubmit={handleReset} className="space-y-4">
+          <input
+            type="email"
+            placeholder="Masukkan email Anda"
+            className="w-full px-4 py-2 border rounded"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
           <button
             type="submit"
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-full transition duration-200"
+            className="w-full bg-blue-500 text-white py-2 rounded-full"
           >
-            Submit
+            Kirim Link Reset
           </button>
         </form>
       </div>

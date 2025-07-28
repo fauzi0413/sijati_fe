@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LandingPage from './components/LandingPage'; // pastikan file ini ada
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import DashboardPage from './pages/DashboardPage';
+import Chatbot from './pages/Chatbot';
 import UploadDokumen from './pages/UploadDokumen';
 import FAQManagement from './pages/FAQManagement';
 import StatistikChatbot from './pages/StatistikChatbot';
@@ -17,12 +17,13 @@ import ChatHistory from './pages/ChatHistory';
 function App() {
   return (
     <Router>
+
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/dashboard/:session_id" element={<DashboardPage />} />
+        <Route path="/chatbot" element={<Chatbot />} />
+        <Route path="/chatbot/:session_id" element={<Chatbot />} />
          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Halaman Dashboard/Admin */}

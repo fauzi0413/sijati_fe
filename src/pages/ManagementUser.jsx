@@ -134,9 +134,10 @@ export default function ManagementUser() {
     });
   };
 
-  const filteredUsers = users.filter((u) =>
-    u.username.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredUsers = users
+  .slice() // buat salinan array
+  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // urutkan DESC
+  .filter((u) => u.username.toLowerCase().includes(search.toLowerCase()));
   
   const getRoleBadgeStyle = (role) => {
     switch (role.toLowerCase()) {

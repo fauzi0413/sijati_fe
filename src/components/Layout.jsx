@@ -3,16 +3,22 @@ import { Link } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import { FiSettings, FiLogOut } from "react-icons/fi";
 import { IoMdArrowBack } from "react-icons/io";
+import { AiFillStar } from "react-icons/ai";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase";
 import Swal from "sweetalert2";
-
+import LogoSiJati from "../assets/jati-logo.png";
+import { FaRegStar } from "react-icons/fa";
 
 export default function Layout({ children }) {
   const user = JSON.parse(localStorage.getItem("user"));
   const [showMenu, setShowMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [comment, setComment] = useState("");
   const profileRef = useRef(null);
 
   const getProfileImage = () => {
@@ -74,13 +80,12 @@ export default function Layout({ children }) {
             }, 1000);
           },
           willClose: () => {
-            clearInterval(countdownInterval); // pastikan interval dibersihkan jika user klik OK lebih awal
+            clearInterval(countdownInterval);
           },
         }).then(() => {
-          window.location.href = "/chatbot"; // jika user klik OK
+          window.location.href = "/chatbot";
         });
 
-        // atau auto redirect setelah 30 detik
         setTimeout(() => {
           window.location.href = "/chatbot";
         }, 30000);
@@ -99,19 +104,12 @@ export default function Layout({ children }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  
   const handleResetPasswordLink = async () => {
-    const user = JSON.parse(localStorage.getItem("user"));
-
     if (!user || !user.email) {
       return Swal.fire({
         icon: "error",
         title: "Gagal",
         text: "Email pengguna tidak tersedia. Pastikan Anda sudah login.",
-        confirmButtonText: "OK",
-        customClass: {
-          confirmButton: "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded",
-        },
       });
     }
 
@@ -121,30 +119,21 @@ export default function Layout({ children }) {
         icon: "success",
         title: "Email terkirim",
         text: `Link reset password telah dikirim ke ${user.email}.`,
-        confirmButtonText: "OK",
-        customClass: {
-          confirmButton: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded",
-        },
       });
     } catch (err) {
-      console.error(err);
-      let message = "Terjadi kesalahan.";
-      if (err.code === "auth/user-not-found") {
-        message = "Email tidak ditemukan.";
-      } else if (err.code === "auth/invalid-email") {
-        message = "Format email tidak valid.";
-      }
-
       Swal.fire({
         icon: "error",
         title: "Gagal",
-        text: message,
-        confirmButtonText: "OK",
-        customClass: {
-          confirmButton: "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded",
-        },
+        text: "Terjadi kesalahan.",
       });
     }
+  };
+
+  const handleFeedbackSubmit = () => {
+    console.log("Rating:", rating, "Comment:", comment);
+    setShowFeedback(false);
+    setRating(0);
+    setComment("");
   };
 
   return (
@@ -152,12 +141,10 @@ export default function Layout({ children }) {
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col sm:ml-64">
-        {/* Header */}
         <header
           className="fixed top-0 left-0 sm:left-64 right-0 h-16 px-4 sm:px-6 bg-[#f5f6fa] border-b flex items-center justify-between sm:justify-end z-40"
           ref={profileRef}
         >
-          {/* Hamburger menu */}
           <button
             className="sm:hidden text-2xl text-gray-600"
             onClick={() => setSidebarOpen(true)}
@@ -168,7 +155,6 @@ export default function Layout({ children }) {
           <div className="relative">
             {user ? (
               <>
-                {/* Profile & Welcome */}
                 <div className="flex items-center space-x-2">
                   <span className="hidden sm:block text-sm text-gray-700">
                     Welcome, {user?.displayName?.toUpperCase() || user?.username?.toUpperCase()}
@@ -181,46 +167,51 @@ export default function Layout({ children }) {
                       setShowMenu(!showMenu);
                       setShowSettings(false);
                     }}
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                        user?.displayName || user?.username || "User"
-                      )}&background=random&rounded=true`;
-                    }}
                   />
                 </div>
 
-                {/* Dropdown */}
                 {showMenu && !showSettings && (
-                  <div className="absolute top-16 right-6 bg-white shadow-lg rounded-xl py-3 px-5 space-y-3 z-50 w-44">
+                  <div className="absolute top-16 right-6 bg-white shadow-lg rounded-xl py-3 px-2 space-y-1 z-50 w-44">
                     <button
                       onClick={() => {
                         setShowSettings(true);
                         setShowMenu(false);
                       }}
-                      className="flex items-center space-x-2 hover:opacity-80 text-sm"
+                      className="flex items-center space-x-2 text-sm group w-full px-3 py-2 rounded-md transition-all duration-200 hover:bg-blue-100 justify-start"
                     >
-                      <FiSettings className="text-lg" />
-                      <span>Setting</span>
+                      <FiSettings className="text-lg text-black group-hover:text-blue-500" />
+                      <span className="group-hover:text-blue-700">Setting</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowFeedback(true);
+                        setShowMenu(false);
+                      }}
+                      className="flex items-center space-x-2 text-sm group w-full px-3 py-2 rounded-md transition-all duration-200 hover:bg-yellow-100 justify-start"
+                    >
+                      <FaRegStar className="text-lg text-black group-hover:text-yellow-500" />
+                      <span className="group-hover:text-yellow-700">Feedback</span>
                     </button>
                     <button
                       onClick={handleLogout}
-                      className="flex items-center space-x-2 text-sm text-red-500 hover:opacity-80"
+                      className="flex items-center space-x-2 text-sm group w-full px-3 py-2 rounded-md transition-all duration-200 hover:bg-red-100 justify-start"
                     >
-                      <FiLogOut className="text-lg" />
-                      <span>Logout</span>
+                      <FiLogOut className="text-lg text-red-500 group-hover:text-red-600" />
+                      <span className="text-red-500 group-hover:text-red-700">Logout</span>
                     </button>
                   </div>
                 )}
 
-                {/* Settings Modal */}
                 {showSettings && (
                   <div className="absolute top-16 right-0 w-80 bg-white shadow-2xl rounded-xl p-5 z-50">
                     <div className="flex flex-col items-center mb-4">
-                      <div className="flex self-start text-xl space-x-2 cursor-pointer" onClick={() => {
-                        setShowSettings(false);
-                        setShowMenu(true);
-                      }}>
+                      <div
+                        className="flex self-start text-xl space-x-2 cursor-pointer"
+                        onClick={() => {
+                          setShowSettings(false);
+                          setShowMenu(true);
+                        }}
+                      >
                         <IoMdArrowBack className="text-2xl text-gray-700 hover:text-black" />
                         <span className="text-base text-gray-700 hover:text-black">Back</span>
                       </div>
@@ -228,12 +219,6 @@ export default function Layout({ children }) {
                         src={getProfileImage()}
                         alt="Profile"
                         className="w-14 h-14 rounded-full my-2"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                            user?.displayName || user?.username || "User"
-                          )}&background=random&rounded=true`;
-                        }}
                       />
                       <span className="font-semibold">
                         {user?.displayName || user?.username || "User"}
@@ -272,14 +257,63 @@ export default function Layout({ children }) {
                     </div>
                   </div>
                 )}
+
+                {showFeedback && (
+                  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-xl shadow-lg w-96 p-6 relative">
+                      <button
+                        onClick={() => setShowFeedback(false)}
+                        className="absolute top-3 right-3 text-gray-600 hover:text-black text-lg"
+                      >
+                        ✕
+                      </button>
+                      <div className="flex flex-col items-center">
+                        <img
+                          src={LogoSiJati}
+                          alt="SI JATI"
+                          className="w-20 h-20 mb-3"
+                        />
+                        <h2 className="text-xl font-bold mb-2">Give us a feedback!</h2>
+                        <p className="text-gray-500 text-sm text-center mb-4">
+                          Your input is important for us. We take customer feedback very seriously.
+                        </p>
+                        <div className="flex space-x-1 mb-4">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <AiFillStar
+                              key={star}
+                              size={28}
+                              onClick={() => setRating(star)}
+                              onMouseEnter={() => setHoverRating(star)}
+                              onMouseLeave={() => setHoverRating(0)}
+                              className={`cursor-pointer ${
+                                (hoverRating || rating) >= star
+                                  ? "text-yellow-400"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <textarea
+                          placeholder="Add a comment"
+                          value={comment}
+                          onChange={(e) => setComment(e.target.value)}
+                          className="w-full border rounded-lg p-2 text-sm mb-4"
+                          rows="3"
+                        ></textarea>
+                        <button
+                          onClick={handleFeedbackSubmit}
+                          className="bg-pink-500 hover:bg-pink-600 text-white w-full py-2 rounded-lg font-semibold"
+                        >
+                          Submit Feedback
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
-              // Guest mode
               <div className="flex items-center space-x-4">
-                <Link
-                  to="/login"
-                  className="text-sm text-blue-600 hover:underline"
-                >
+                <Link to="/login" className="text-sm text-blue-600 hover:underline">
                   Login
                 </Link>
                 <Link
@@ -293,7 +327,6 @@ export default function Layout({ children }) {
           </div>
         </header>
 
-        {/* Main content */}
         <main className="pt-16 px-4 sm:px-6 pb-20 flex-1 overflow-y-auto bg-[#f5f6fa]">
           {children}
         </main>

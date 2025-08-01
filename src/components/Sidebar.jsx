@@ -12,6 +12,7 @@ import { useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getChatHistoryBySessionID, getGroupedChatHistoryByUserID, getUserByID } from "../api/axios";
 import { AnimatePresence, motion } from "framer-motion";
+import LogoSiJati from "../assets/jati-logo-polos.png";
 
 export default function Sidebar({ isOpen = false, onClose = () => {} }) {
   const location = useLocation();
@@ -75,7 +76,8 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
     <>
       {/* Desktop sidebar */}
       <aside className="hidden sm:flex flex-col w-64 min-h-screen bg-[#050C56] text-white p-6 space-y-6 fixed">
-        <h1 className="text-xl font-bold">
+        <h1 className="text-xl font-bold flex items-center gap-2">
+          <img src={LogoSiJati} alt="Logo SI JATI" className="w-10 h-10" />
           <Link to="/">SI JATI</Link>
         </h1>
 
@@ -89,7 +91,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
           {/* Chat History di bagian bawah */}
           {groupedChats.length > 0 && (
             <div className="mt-auto">
-              <h3 className="flex items-center text-gray-400 gap-2 text-sm font-semibold uppercase mb-2">
+              <h3 className="flex items-center text-gray-400 gap-2 text-sm font-semibold uppercase mb-2 mt-10">
                 <History className="w-5 h-5" />
                 Chats History
               </h3>
@@ -138,6 +140,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
             >
             <div className="">
               <div className="flex mb-4">
+                <img src={LogoSiJati} alt="Logo SI JATI" className="w-10 h-10 mr-2" />
                 <h1 className="text-xl font-bold flex items-center gap-2">
                   <Link to="/">SI JATI</Link>
                 </h1>
@@ -195,7 +198,9 @@ function NavLinks({ user }) {
     <>
       <Link
         to={'/chatbot'}
-        onClick={() => window.dispatchEvent(new Event("chatResetRequested"))}
+        onClick={() => {
+          localStorage.setItem("reset-chat", "true");
+        }}
         className="flex items-center gap-2 hover:text-gray-300 cursor-pointer mb-3"
       >
         <ChatBubbleOvalLeftEllipsisIcon className="w-5 h-5" />

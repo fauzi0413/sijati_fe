@@ -41,6 +41,71 @@ const LoginPage = () => {
       });
     }
 
+    // Cek akun admin statis
+    if (email === "admin@sijati.id" && password === "admin123") {
+      const ipAddress = await fetch("https://api.ipify.org?format=json")
+        .then(res => res.json())
+        .then(data => data.ip)
+        .catch(() => 'unknown');
+
+      const userAgent = navigator.userAgent;
+
+      const staticAdmin = {
+        user_id: "admin-static",
+        email,
+        username: "Admin SI JATI",
+        role: "admin",
+        last_login: new Date().toISOString(),
+      };
+
+      // ⬇️ Cek apakah user admin-static sudah ada
+      getUser(async (users) => {
+        const alreadyExists = users.some(u => u.user_id === staticAdmin.user_id);
+
+        if (!alreadyExists) {
+          // Jika belum ada, insert ke tabel user
+          const newUserPayload = {
+            user_id: staticAdmin.user_id,
+            username: staticAdmin.username,
+            email: staticAdmin.email,
+            password: "-", // bisa pakai hash dummy, tidak digunakan
+            role: staticAdmin.role,
+            last_login: staticAdmin.last_login,
+          };
+
+          postUser(newUserPayload, (res) => {
+            console.log("✅ Admin static user ditambahkan:", res);
+          });
+        }
+
+        // Simpan login log sukses
+        postLoginlogs({
+          user_id: staticAdmin.user_id,
+          ip_address: ipAddress,
+          user_agent: userAgent,
+          status: 'success',
+          failure_reason: ''
+        }, (res) => {
+          // console.log('Login log saved:', res);
+        });
+
+        // Simpan ke localStorage dan redirect
+        localStorage.setItem("user", JSON.stringify(staticAdmin));
+        Swal.fire({
+          icon: 'success',
+          title: 'Login berhasil',
+          text: `Selamat datang ${staticAdmin.username}!`,
+          customClass: {
+            confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
+          }
+        }).then(() => {
+          navigate(`/chatbot`);
+        });
+      });
+
+      return; // Penting untuk hentikan eksekusi lanjut
+    }
+
     getUser(async (users) => {
       const foundUser = users.find(u => u.email === email);
 

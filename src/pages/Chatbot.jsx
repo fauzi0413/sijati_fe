@@ -17,7 +17,7 @@ const LazyLoader = () => (
   </div>
 );
 
-export default function DashboardPage({ isWidgetMode = false }) {
+export default function Chatbot({ isWidgetMode = false }) {
   const params = useParams();
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
@@ -26,6 +26,7 @@ export default function DashboardPage({ isWidgetMode = false }) {
   const bottomRef = useRef(null);
   const [docs, setDocs] = useState([]);
   const [faqs, setFaqs] = useState([]);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
     getDocument((data) => {
@@ -44,7 +45,9 @@ export default function DashboardPage({ isWidgetMode = false }) {
 
   // Ambil history saat session_id berubah
   useEffect(() => {
-    if (session_id) {
+    const widgetClosed = localStorage.getItem("widget_closed") === "true";
+    
+    if (session_id && !(isWidgetMode && widgetClosed)) {
       getChatHistoryBySessionID(session_id, (data) => {
         if (Array.isArray(data)) {
           const formatted = data.map((entry) => ([
@@ -63,22 +66,20 @@ export default function DashboardPage({ isWidgetMode = false }) {
           setMessages(formatted);
         }
       });
-    } else {
-      setMessages([]);
     }
   }, [session_id]);
 
-  // Reset chat dari luar
   useEffect(() => {
-    const handleResetChat = () => {
+    const shouldReset = localStorage.getItem("reset-chat") === "true";
+    const widgetClosed = localStorage.getItem("widget_closed") === "true";
+
+    if (!session_id && shouldReset && widgetClosed) {
       setMessages([]);
-      setInput("");
-    };
-    window.addEventListener("chatResetRequested", handleResetChat);
-    return () => {
-      window.removeEventListener("chatResetRequested", handleResetChat);
-    };
-  }, []);
+      setHasInteracted(false);
+      localStorage.removeItem("reset-chat");
+      localStorage.removeItem("widget_closed");
+    }
+  }, [session_id]);
 
   // Scroll ke bawah setelah ada pesan baru
   useEffect(() => {
@@ -87,9 +88,35 @@ export default function DashboardPage({ isWidgetMode = false }) {
     }
   }, [messages]);
 
+  useEffect(() => {
+    const handleReset = () => {
+      setMessages([]);
+      setHasInteracted(false);
+      localStorage.removeItem("reset-chat");
+      localStorage.removeItem("widget_closed");
+      localStorage.removeItem("widget_session_id");
+      localStorage.removeItem("session_id");
+    };
+
+    window.addEventListener("chatResetRequested", handleReset);
+
+    // Jalankan juga saat mount
+    const shouldReset = localStorage.getItem("reset-chat") === "true";
+    const widgetClosed = localStorage.getItem("widget_closed") === "true";
+    if (shouldReset || widgetClosed) {
+      handleReset();
+    }
+
+    return () => {
+      window.removeEventListener("chatResetRequested", handleReset);
+    };
+  }, [session_id]);
+
   const handleSend = async (optionalInput) => {
     const finalInput = optionalInput || input;
     if (!finalInput.trim()) return;
+
+    setHasInteracted(true);
 
     const userMessage = { from: "user", text: finalInput };
     setMessages((prev) => [...prev, userMessage]);
@@ -107,10 +134,34 @@ export default function DashboardPage({ isWidgetMode = false }) {
     }
 
     try {
+      function searchDocuments(query, docs) {
+        const lowerQuery = query.toLowerCase();
+
+        return docs.filter(doc =>
+          Array.isArray(doc.chunks) &&
+          doc.chunks.some(chunk => typeof chunk === "string" && chunk.toLowerCase().includes(lowerQuery))
+        );
+      }
+
+       // Matching FAQ
+      const matchedFaqs = faqs.filter(f =>
+        f.question?.toLowerCase().includes(finalInput.toLowerCase()) ||
+        finalInput.toLowerCase().includes(f.question?.toLowerCase())
+      );
+
+      // Matching documents
+      const matchedDocs = searchDocuments(finalInput, docs);
+
+      // Gabungkan ke localContext (hati-hati dengan undefined/null)
       const localContext = [
-        ...(faqs?.map(f => `${f.question}: ${f.answer}`) || []),
-        ...(docs?.flatMap(d => d.chunks || []))  // <--- gunakan flatMap untuk meratakan array of chunks
+        ...matchedFaqs.map(f => `${f.question}: ${f.answer}`),
+        ...matchedDocs.flatMap(d => d.chunks || []),
       ].join("\n\n");
+
+      // Bangun prompt user
+      const contextPrompt = localContext.trim()
+        ? `Referensi lokal:\n${localContext}\n\nPertanyaan: ${finalInput}`
+        : `Pertanyaan: ${finalInput}`;
 
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
@@ -123,25 +174,26 @@ export default function DashboardPage({ isWidgetMode = false }) {
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
           messages: [
-            { 
-              role: "system", 
-              content: `Kamu adalah SI JATI (Sistem Informasi Jakarta Timur), asisten digital untuk warga yang ingin mengetahui berbagai hal tentang Jakarta Timur. 
-              Tugasmu adalah menjawab pertanyaan **hanya seputar wilayah Jakarta Timur**, termasuk layanan publik, administrasi, kegiatan, atau informasi masyarakat.
-
-              Jika pengguna bertanya tentang topik di luar Jakarta Timur, seperti kota lain, resep masakan, atau hal umum yang tidak relevan, 
-              jawablah dengan **nada ramah dan sopan**. Sampaikan bahwa kamu hanya dapat membantu pertanyaan yang berkaitan dengan Jakarta Timur.
-
-              Contoh jawaban yang baik: 
-              "Topik itu menarik sekali! Tapi saya hanya dapat membantu untuk pertanyaan seputar Jakarta Timur ya 😊 Jika ada yang bisa saya bantu terkait Jakarta Timur, saya siap membantu."`
+            {
+              role: "system",
+              content: `
+                Kamu adalah chatbot SI JATI yang hanya menjawab pertanyaan tentang Jakarta Timur.
+                Jika pengguna bertanya di luar topik Jakarta Timur, jawab:
+                "Maaf, saya hanya bisa menjawab pertanyaan seputar Jakarta Timur."
+                Selalu jawab dengan bahasa Indonesia, santai singkat dan jelas.
+              `,
             },
             { 
-              // Untuk membuat sitem RAG berdasarkan FAQ dan dokumen dari database
               role: "user", 
-              content: `Referensi lokal:\n${localContext}\n\nPertanyaan: ${finalInput}`,
+              content: contextPrompt,
             },
           ],
         }),
       });
+      
+      console.log("Matched FAQs:", matchedFaqs);
+      console.log("Matched Docs:", matchedDocs);
+      console.log("localContext tokens approx:", localContext.length / 4);
 
       const data = await res.json();
       const botReply = data?.choices?.[0]?.message?.content || "Maaf, tidak bisa menjawab saat ini.";
@@ -167,7 +219,7 @@ export default function DashboardPage({ isWidgetMode = false }) {
         session_id: sessionIdToUse,
         user_id,
         user_message: finalInput,
-        retrieved_context: "-",
+        retrieved_context: localContext || "-",
         bot_response: botReply,
       }, () => {
         window.dispatchEvent(new Event("chatHistoryUpdated"));
@@ -240,7 +292,11 @@ export default function DashboardPage({ isWidgetMode = false }) {
                 msg.from === "user" ? "bg-blue-100 self-end" : "bg-gray-200 self-start"
               }`}
             >
-              {msg.from === "bot" ? <ReactMarkdown>{msg.text}</ReactMarkdown> : msg.text}
+              {msg.from === "bot" ? 
+                <div className="text-left">
+                  <ReactMarkdown>{msg.text}</ReactMarkdown>
+                </div>
+                : msg.text}
               {msg.time && (
                 <div className="text-[12px] text-gray-700 text-right mt-1">
                   {formatTime(msg.time)}

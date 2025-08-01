@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import NotFoundImg from "../assets/404_box.png"; // Pastikan file ini tersedia
+import NotFoundImg from "../assets/jati-404.png";
 
 export default function NotFound() {
   const navigate = useNavigate();

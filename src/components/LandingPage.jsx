@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaRegMessage } from "react-icons/fa6";
 import bgImage from "../assets/bg-biru.png";
-import ChatbotPopup from './ChatbotPopUp';
+import ChatbotPopup from "./ChatbotPopUp";
+import LogoSiJati from "../assets/jati-logo.png";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -18,14 +19,24 @@ const LandingPage = () => {
         backgroundRepeat: "no-repeat",
       }}
     >
-      <h1 className="text-white text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-4 leading-tight">
+      {/* ✅ Logo lebih besar */}
+      <img
+        src={LogoSiJati}
+        alt="Logo SI JATI"
+        className="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 mb-6 drop-shadow-lg"
+      />
+
+      {/* ✅ Tulisan Welcome hanya muncul di layar ≥ 640px */}
+      <h1 className="hidden sm:block text-white text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-4 leading-tight">
         Welcome to SI JATI
       </h1>
 
+      {/* ✅ Subtext */}
       <p className="text-white text-base sm:text-lg md:text-xl mb-10 max-w-md sm:max-w-xl">
         Explore East Jakarta and create your experience.
       </p>
 
+      {/* ✅ Tombol Explore */}
       <button
         onClick={() => navigate("/chatbot")}
         className="px-8 sm:px-12 py-3 sm:py-4 border border-white text-white text-sm sm:text-base md:text-lg rounded-full font-semibold hover:bg-white hover:text-[#0E2A7B] transition"
@@ -33,12 +44,12 @@ const LandingPage = () => {
         Let&apos;s Explore!
       </button>
 
-      {/* Popup Chatbot */}
+      {/* ✅ Popup Chatbot */}
       {isChatOpen && (
         <ChatbotPopup isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
       )}
 
-      {/* Tombol chat (hanya muncul saat popup tertutup) */}
+      {/* ✅ Tombol Chat */}
       {!isChatOpen && (
         <button
           onClick={() => setIsChatOpen(true)}

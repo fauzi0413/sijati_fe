@@ -13,9 +13,15 @@ export default function UploadDokumen() {
   const [type, setType] = useState(""); // kategori dokumen
   const [selectedFile, setSelectedFile] = useState(null);
   const user = JSON.parse(localStorage.getItem("user"));
-  const [user_id] = useState(user.uid)
+  const [user_id] = useState(user.uid || user.user_id); // ambil user_id dari localStorage
   const [docList, setDocList] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
+  const [currentFile, setCurrentFile] = useState({
+    file_name: "",
+    file_base64: "",
+    chunks: [],
+    embedding: [],
+  });
 
   const categories = ["Laporan", "Data", "Slides", "Gambar"];
 
@@ -32,12 +38,62 @@ export default function UploadDokumen() {
     setSelectedFile(e.dataTransfer.files[0]);
   };
 
+  const upload = (fileBase64 = null) => {
+    // Gunakan data dari file baru jika ada, kalau tidak pakai yang lama
+    const isEdit = editIndex !== null;
+
+    const payload = {
+      title,
+      type,
+      user_id,
+      file_name: selectedFile?.name || (isEdit ? currentFile.file_name : ""),
+      file_base64: fileBase64 || (isEdit ? currentFile.file_base64 : ""),
+      chunks: isEdit ? currentFile.chunks : [],
+      embedding: isEdit ? currentFile.embedding : [],
+    };
+
+    if (!payload.file_base64 || !payload.file_name) {
+      if (!isEdit) { // hanya error jika ini adalah upload baru
+        Swal.close(); // <- TUTUP alert loading terlebih dulu
+        Swal.fire({
+          icon: "error",
+          title: "File belum dipilih",
+          text: "Upload file wajib saat input baru.",
+          customClass: {
+            confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
+          }
+        });
+        return;
+      }
+    }
+
+    // lanjut upload
+    const id = docList[editIndex]?.doc_id;
+    const method = editIndex !== null ? putDocument.bind(null, id) : postDocument;
+
+    method(payload, () => {
+      Swal.close();
+      Swal.fire({
+        icon: "success",
+        title: editIndex !== null ? "Dokumen diperbarui" : "Dokumen berhasil di-upload",
+        customClass: {
+          confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
+        }
+      });
+      resetForm();
+      getDocument((data) => {
+        const sorted = [...data].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        setDocList(sorted);
+      });
+    });
+  };
+
   const handleSubmit = () => {
-    if (!selectedFile || !type || !title) {
+    if (!title || !type || (!selectedFile && editIndex === null)) {
       Swal.fire({
         icon: "warning",
         title: "Field tidak boleh kosong",
-        text: "Lengkapi kategori, judul, dan file sebelum upload",
+        text: "Lengkapi kategori, judul, dan file.",
         customClass: {
           confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
         }
@@ -45,8 +101,7 @@ export default function UploadDokumen() {
       return;
     }
 
-    // 👇 Tambahkan validasi ukuran file di sini
-    if (selectedFile.size > 100 * 1024 * 1024) {
+    if (selectedFile && selectedFile.size > 100 * 1024 * 1024) {
       Swal.fire({
         icon: "error",
         title: "Ukuran file terlalu besar",
@@ -58,68 +113,32 @@ export default function UploadDokumen() {
       return;
     }
 
-    // ✅ Tampilkan loading saat file dibaca & upload dimulai
     Swal.fire({
       title: "Sedang mengunggah...",
       text: "Mohon tunggu sebentar.",
       allowOutsideClick: false,
       showConfirmButton: false,
-      didOpen: () => {
-        Swal.showLoading();
-      },
+      didOpen: () => Swal.showLoading(),
     });
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64File = reader.result.split(",")[1];
-
-      const payload = {
-        title,
-        type,
-        user_id,
-        file_name: selectedFile.name,
-        file_base64: base64File,
+    if (selectedFile) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64File = reader.result.split(",")[1];
+        upload(base64File);
       };
-      
-      if (editIndex !== null) {
-        const id = docList[editIndex]?.doc_id;
-        putDocument(id, payload, () => {
-          Swal.close();
-          Swal.fire({
-            icon: "success",
-            title: "Dokumen diperbarui",
-            text: "Data berhasil diupdate",
-            customClass: {
-              confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
-            }
-          });
-          setEditIndex(null);
-          resetForm();
-          getDocument((data) => setDocList(data));
-        });
-      } else {
-        postDocument(payload, () => {
-          Swal.close();
-          Swal.fire({
-            icon: "success",
-            title: "Dokument Berhasil di Upload!",
-            customClass: {
-              confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700',
-            }
-          });
-          resetForm();
-          getDocument((data) => setDocList(data));
-        });
-      }
-    };
-
-    reader.readAsDataURL(selectedFile);
+      reader.readAsDataURL(selectedFile);
+    } else {
+      upload(); // gunakan file lama
+    }
   };
 
   const resetForm = () => {
+    setEditIndex(null);
     setTitle("");
     setType("");
     setSelectedFile(null);
+    setCurrentFile({ file_name: "", file_base64: "" }); // tambahkan ini
   };
 
   const handleEdit = (index) => {
@@ -127,6 +146,13 @@ export default function UploadDokumen() {
     setTitle(doc.title);
     setType(doc.type);
     setEditIndex(index);
+
+    setCurrentFile({
+      file_name: doc.file_name,
+      file_base64: doc.file_base64,
+      chunks: doc.chunks || [],
+      embedding: doc.embedding || [],
+    });
 
     Swal.fire({
       icon: "info",
@@ -242,12 +268,22 @@ export default function UploadDokumen() {
               />
             </div>
 
-            <button
-              onClick={handleSubmit}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm font-medium"
-            >
-              {editIndex !== null ? "Perbarui Dokumen" : "Upload Dokumen"}
-            </button>
+            <div className="flex justify-end gap-2 mt-2">
+              <button
+                type="button"
+                onClick={resetForm}
+                className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 text-sm font-medium mr-2"
+              >
+                Reset Form
+              </button>
+              <button
+                type="submit"
+                onClick={handleSubmit}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm font-medium"
+              >
+                {editIndex !== null ? "Perbarui Dokumen" : "Upload Dokumen"}
+              </button>
+            </div>
           </div>
 
           <div className="bg-white rounded-lg shadow overflow-hidden">

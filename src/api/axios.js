@@ -179,6 +179,20 @@ export const deleteUserById = (id, callback) => {
   })
 }
 
+export const getTotalUserCount = (range, callback) => {
+  let url = `${baseURLBackEnd}/users/total`;
+  if (range?.start && range?.end) {
+    url += `?start=${range.start}&end=${range.end}`;
+  } else if (range?.start) {
+    url += `?start=${range.start}`;
+  }
+
+  axios
+    .get(url)
+    .then((res) => callback(res.data))
+    .catch((err) => console.error(err));
+};
+
 // FETCH API USER
 export const getLoginlogs = (callback) => {
   axios
@@ -349,6 +363,30 @@ export const getFaqCategoryStats = (callback) => {
 export const getDocumentCategoryStats = (callback) => {
   axios
     .get(`${baseURLBackEnd}/document/stats/category`)
+    .then((res) => callback(res.data))
+    .catch((err) => console.error(err));
+};
+
+// FETCH API FEEDBACK
+export const postFeedback = async (payload, callback) => {
+  try {
+    const res = await axios.post(`${baseURLBackEnd}/feedback`, payload);
+    callback(res.data);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+export const getAverageFeedback = (callback) => {
+  axios
+    .get(`${baseURLBackEnd}/feedback/average`)
+    .then((res) => callback(res.data))
+    .catch((err) => console.error(err));
+};
+
+export const getFeedback = (callback) => {
+  axios
+    .get(`${baseURLBackEnd}/feedback`)
     .then((res) => callback(res.data))
     .catch((err) => console.error(err));
 };

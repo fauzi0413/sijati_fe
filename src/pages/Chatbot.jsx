@@ -46,25 +46,19 @@ export default function Chatbot({ isWidgetMode = false }) {
   // Ambil history saat session_id berubah
   useEffect(() => {
     const widgetClosed = localStorage.getItem("widget_closed") === "true";
-    
+
     if (session_id && !(isWidgetMode && widgetClosed)) {
       getChatHistoryBySessionID(session_id, (data) => {
-        if (Array.isArray(data)) {
-          const formatted = data.map((entry) => ([
-            {
-              from: "user",
-              text: entry.user_message,
-              time: entry.created_at,
-            },
-            {
-              from: "bot",
-              text: entry.bot_response,
-              time: entry.created_at,
-            },
-          ])).flat();
+        let formatted = [];
 
-          setMessages(formatted);
+        if (Array.isArray(data)) {
+          formatted = data.map((entry) => ([
+            { from: "user", text: entry.user_message, time: entry.created_at },
+            { from: "bot", text: entry.bot_response, time: entry.created_at },
+          ])).flat();
         }
+
+        setMessages(formatted);
       });
     }
   }, [session_id]);
@@ -205,13 +199,22 @@ export default function Chatbot({ isWidgetMode = false }) {
       let user_id = user?.user_id || user?.uid || "-";
 
       let sessionIdToUse = session_id;
+      let isNewSession = false;
+
       if (!sessionIdToUse) {
         const newSessionId = uuidv4();
         sessionIdToUse = newSessionId;
+        isNewSession = true;
+
+        // Simpan chat sementara ke localStorage agar bisa dimuat setelah navigate
+        const tempChat = [
+          { from: "user", text: finalInput },
+          { from: "bot", text: botReply },
+        ];
+        localStorage.setItem("temp_chat", JSON.stringify(tempChat));
+
         if (isWidgetMode) {
           localStorage.setItem("widget_session_id", newSessionId);
-        } else {
-          navigate(`/chatbot/${newSessionId}`, { replace: true });
         }
       }
 
@@ -224,6 +227,12 @@ export default function Chatbot({ isWidgetMode = false }) {
       }, () => {
         window.dispatchEvent(new Event("chatHistoryUpdated"));
       });
+
+      // ✅ Lakukan navigate setelah post berhasil
+      if (isNewSession && !isWidgetMode) {
+        navigate(`/chatbot/${sessionIdToUse}`, { replace: true });
+        return;
+      }
 
     } catch (error) {
       console.error("Error:", error);

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { StarIcon } from "@heroicons/react/24/solid";
-import { getFeedback } from "../api/axios";
+import { getFeedback, getUser } from "../api/axios";
 import Layout from "../components/Layout";
 
 export default function FeedbackHistory() {
+  const [users, setUsers] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
   const [selectedStars, setSelectedStars] = useState("All Ratings");
   const [openStarsDropdown, setOpenStarsDropdown] = useState(false);
@@ -17,6 +18,7 @@ export default function FeedbackHistory() {
 
   useEffect(() => {
     getFeedback((data) => setFeedbacks(data));
+    getUser((data) => setUsers(data));
 
     const handleClickOutside = (event) => {
       if (starsRef.current && !starsRef.current.contains(event.target)) {
@@ -30,6 +32,11 @@ export default function FeedbackHistory() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const getUsernameById = (id) => {
+    const user = users.find((u) => u.user_id === id || u.uid === id);
+    return user?.username || user?.displayName || id;
+  };
 
   const starOptions = [
     { label: "All Ratings", value: "All" },
@@ -259,7 +266,7 @@ export default function FeedbackHistory() {
                   <div className="flex items-center mb-1">
                     <div className="w-10 h-10 rounded-full bg-gray-200 mr-3"></div>
                     <div>
-                      <p className="font-semibold">{fb.user_id}</p>
+                      <p className="font-semibold">{getUsernameById(fb.user_id)}</p>
                       <div className="flex items-center text-yellow-500">
                         {Array.from({ length: 5 }).map((_, idx) => (
                           <StarIcon key={idx} className={`w-4 h-4 ${idx < fb.rating ? "text-yellow-400" : "text-gray-300"}`} />

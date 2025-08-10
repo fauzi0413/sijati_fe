@@ -14,6 +14,7 @@ import ManagementUser from './pages/ManagementUser';
 import LoginLogs from './pages/LoginLogs';
 import ChatHistory from './pages/ChatHistory';
 import FeedbackHistory from './pages/FeedbackHistory';
+import FAQUser from './pages/FAQUser';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
         <Route path="/login-logs" element={<LoginLogs />} />
         <Route path="/history" element={<ChatHistory />} />
         <Route path="/feedback-history" element={<FeedbackHistory />} />
+        <Route path="/faq-user" element={<FAQUser />} />
 
         {/* Fallback untuk semua route yang tidak ditemukan */}
         <Route path="*" element={<NotFound />} />

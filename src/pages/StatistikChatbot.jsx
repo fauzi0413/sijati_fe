@@ -214,7 +214,7 @@ export default function StatistikChatbot() {
           </div>
 
           {/* Total Pemberi Feedback */}
-          <p className="text-sm font-semibold mt-4">Total Pemberi Feedback</p>
+          <p className="text-sm font-semibold mt-4">Total Feedback</p>
           <p className="text-4xl font-bold">{feedbackCount}</p>
         </div>
       </div>

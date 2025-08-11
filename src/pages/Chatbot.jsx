@@ -5,6 +5,7 @@ import Layout from "../components/Layout";
 import { useNavigate, useParams } from "react-router-dom";
 import { getChatHistoryBySessionID, getDocument, getFAQ, postChatHistory } from "../api/axios";
 import { v4 as uuidv4 } from "uuid";
+import maskotSiJati from "../assets/maskot-sijati.svg";
 
 // Loader untuk bot loading
 const LazyLoader = () => (
@@ -264,7 +265,16 @@ export default function Chatbot({ isWidgetMode = false }) {
         <div className={`flex flex-col items-center ${userHasStarted ? "" : "justify-end h-full"}`}>
           {!userHasStarted && (
             <>
-              <h1 className="text-pink-500 text-2xl font-semibold mb-6 text-center">What can I help with?</h1>
+              <div className="flex flex-col items-center justify-center mb-6">
+                <img
+                  src={maskotSiJati}
+                  alt="Maskot SI JATI"
+                  className="w-70 mr-3"
+                />
+                <h1 className="text-pink-500 text-2xl font-semibold text-center hidden sm:block">
+                  Halo! 👋🏻 Aku Jati, siap bantu cari info seputar Jakarta Timur.
+                </h1>
+              </div>
               <div className="w-full max-w-3xl">
                 <div className="flex items-center rounded-full bg-white px-6 py-3 shadow-md">
                   <span className="text-gray-400 mr-3 text-xl"><LuMessageCircleMore /></span>

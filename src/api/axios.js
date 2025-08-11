@@ -181,6 +181,7 @@ export const deleteUserById = (id, callback) => {
 
 export const getTotalUserCount = (range, callback) => {
   let url = `${baseURLBackEnd}/users/total`;
+
   if (range?.start && range?.end) {
     url += `?start=${range.start}&end=${range.end}`;
   } else if (range?.start) {
@@ -192,6 +193,7 @@ export const getTotalUserCount = (range, callback) => {
     .then((res) => callback(res.data))
     .catch((err) => console.error(err));
 };
+
 
 // FETCH API USER
 export const getLoginlogs = (callback) => {

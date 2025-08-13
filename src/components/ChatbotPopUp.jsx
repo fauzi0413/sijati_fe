@@ -50,7 +50,7 @@ const ChatbotPopup = ({ isOpen, onClose }) => {
             </div>
 
             {/* Konten Chatbot */}
-            <div className="flex-1 overflow-hidden flex flex-col items-stretch">
+            <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
               <Chatbot isWidgetMode={true} />
             </div>
           </div>

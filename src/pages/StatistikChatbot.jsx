@@ -128,7 +128,7 @@ const TimeOfDayChart = ({ title, data }) => {
   const hourTicks = isMobile ? [0, 3, 6, 9, 12, 15, 18, 21] : undefined;
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow min-w-0">
+    <div className="bg-white p-6 rounded-lg shadow min-w-0 mb-10">
       <h2 className="text-sm font-semibold mb-4">{title}</h2>
 
       {isMobile ? (
@@ -186,6 +186,7 @@ const TimeOfDayChart = ({ title, data }) => {
     </div>
   );
 };
+
 
 export default function StatistikChatbot() {
   const [total, setTotal] = useState(0);

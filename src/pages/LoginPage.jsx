@@ -42,7 +42,7 @@ const LoginPage = () => {
     }
 
     // Cek akun admin statis
-    if (email === "admin@sijati.id" && password === "admin123") {
+    if (email === "admin@sijati.com" && password === "admin123") {
       const ipAddress = await fetch("https://api.ipify.org?format=json")
         .then(res => res.json())
         .then(data => data.ip)

@@ -38,9 +38,29 @@ export default function Chatbot({ isWidgetMode = false }) {
     });
   }, []);
 
-  const session_id = isWidgetMode
-    ? localStorage.getItem("widget_session_id")
-    : params.session_id;
+  // Sumber session ID reaktif (state), supaya re-render saat ID baru dibuat
+  const [session_id, setSessionId] = useState(() =>
+    isWidgetMode ? localStorage.getItem("widget_session_id") : params.session_id
+  );
+
+  // Saat widget dibuka: tandai terbuka & pastikan ID ada
+  useEffect(() => {
+    if (isWidgetMode) {
+      // widget sedang terbuka
+      localStorage.setItem("widget_closed", "false");
+
+      let id = localStorage.getItem("widget_session_id");
+      if (!id) {
+        const newId = uuidv4();
+        localStorage.setItem("widget_session_id", newId);
+        id = newId;
+      }
+      setSessionId(id);
+    } else {
+      // full page ambil dari URL param
+      setSessionId(params.session_id);
+    }
+  }, [isWidgetMode, params.session_id]);
 
   const userHasStarted = messages.some((msg) => msg.from === "user");
 
@@ -48,7 +68,7 @@ export default function Chatbot({ isWidgetMode = false }) {
   useEffect(() => {
     const widgetClosed = localStorage.getItem("widget_closed") === "true";
 
-    if (session_id && !(isWidgetMode && widgetClosed)) {
+    if (session_id && !(widgetClosed)) {
       getChatHistoryBySessionID(session_id, (data) => {
         let formatted = [];
 
@@ -215,7 +235,7 @@ export default function Chatbot({ isWidgetMode = false }) {
         localStorage.setItem("temp_chat", JSON.stringify(tempChat));
 
         if (isWidgetMode) {
-          localStorage.setItem("widget_session_id", newSessionId);
+          setSessionId(newSessionId);
         }
       }
 
@@ -260,16 +280,21 @@ export default function Chatbot({ isWidgetMode = false }) {
   ];
 
   const content = (
-    <div className="flex flex-col flex-1 h-full overflow-hidden">
-      <main className={`flex-1 overflow-y-auto ${isWidgetMode ? "p-4" : "px-4 sm:px-6 pt-6"}`}>
-        <div className={`flex flex-col items-center ${userHasStarted ? "" : "justify-end h-full"}`}>
+    <div  className={
+      isWidgetMode
+        ? "flex flex-col h-full max-h-full overflow-hidden rounded-2xl"
+        : "flex flex-col flex-1 h-full overflow-hidden"
+    }>
+      <main className={`flex-1 min-h-0 overflow-y-auto ${isWidgetMode ? "p-4 pb-5" : "px-4 sm:px-6 pt-6"}`} style={{ WebkitOverflowScrolling: "touch" }}>
+        <div className={`flex flex-col items-center ${userHasStarted ? "" : (isWidgetMode ? "" : "justify-end h-full")} min-h-0`}>
           {!userHasStarted && (
             <>
               <div className="flex flex-col items-center justify-center mb-6">
                 <img
                   src={maskotSiJati}
                   alt="Maskot SI JATI"
-                  className="w-70 mr-3"
+                  className={`${isWidgetMode ? "w-30" : "w-70"} mr-3`}
+                  style={{ maxHeight: isWidgetMode ? "146px" : "auto" }}
                 />
                 <h1 className="text-pink-500 text-2xl font-semibold text-center hidden sm:block">
                   Halo! 👋🏻 Aku Jati, siap bantu cari info seputar Jakarta Timur.
@@ -330,23 +355,45 @@ export default function Chatbot({ isWidgetMode = false }) {
       </main>
 
       {userHasStarted && (
-        <div className={`${isWidgetMode ? "w-full px-4 mt-2 mb-4" : "fixed bottom-4 left-4 right-4 sm:left-64 sm:right-6 z-40"}`}>
-          <div className="max-w-3xl mx-auto">
-            <div className="flex items-center rounded-full bg-white px-6 py-3 shadow-md">
-              <span className="text-gray-400 mr-3 text-xl"><LuMessageCircleMore /></span>
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Tulis pertanyaan..."
-                className="flex-1 focus:outline-none text-sm"
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              />
-              <button onClick={() => handleSend()} className="text-gray-400 ml-3 text-lg">➤</button>
+        isWidgetMode ? (
+          // Popup: ikut kontainer, sticky di bawah
+          <div className="w-full px-4 mt-2 pb-4 sticky bottom-0 z-10 bg-white/90 backdrop-blur">
+            <div className="max-w-3xl mx-auto">
+              <div className="flex items-center rounded-full bg-white px-6 py-3 shadow-md">
+                <span className="text-gray-400 mr-3 text-xl"><LuMessageCircleMore /></span>
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Tulis pertanyaan..."
+                  className="flex-1 focus:outline-none text-sm"
+                  onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                />
+                <button onClick={() => handleSend()} className="text-gray-400 ml-3 text-lg">➤</button>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          // Full page: tetap fixed
+          <div className="fixed bottom-4 left-4 right-4 sm:left-64 sm:right-6 z-40">
+            <div className="max-w-3xl mx-auto">
+              <div className="flex items-center rounded-full bg-white px-6 py-3 shadow-md">
+                <span className="text-gray-400 mr-3 text-xl"><LuMessageCircleMore /></span>
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Tulis pertanyaan..."
+                  className="flex-1 focus:outline-none text-sm"
+                  onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                />
+                <button onClick={() => handleSend()} className="text-gray-400 ml-3 text-lg">➤</button>
+              </div>
+            </div>
+          </div>
+        )
       )}
+
     </div>
   );
 

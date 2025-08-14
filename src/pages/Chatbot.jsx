@@ -183,8 +183,8 @@ export default function Chatbot({ isWidgetMode = false }) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
-          "HTTP-Referer": "http://localhost:3000",
-          "X-Title": "SiJati Chatbot",
+          //"HTTP-Referer": "http://localhost:3000",
+          //"X-Title": "SiJati Chatbot",
         },
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
